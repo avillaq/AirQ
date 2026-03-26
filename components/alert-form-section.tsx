@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { subscribeToAlerts } from "@/api"
 import { toast } from 'sonner'
+import { AlertTriangle } from 'lucide-react'
 
 import "./interactive-map/InteractiveMap.css";
 
@@ -52,7 +53,7 @@ export function AlertFormSection() {
         }).filter((city): city is City => city !== null);
         setCities(parsedCities);
       })
-      .catch(error => console.error('Error loading cities:', error));
+      .catch(error => console.error('Error al cargar ciudades:', error));
   }, []);
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function AlertFormSection() {
     try {
       const result = await subscribeToAlerts(formData)
       if (result.status === 'ok') {
-        toast.success(result.message || "Subscribed successfully!")
+        toast.success(result.message || "Suscripción activada correctamente")
         setFormData({
           firstName: "",
           lastName: "",
@@ -98,10 +99,10 @@ export function AlertFormSection() {
         })
         setSearchQuery("")
       } else {
-        toast.error(result.message || "Subscription failed. Please try again.")
+        toast.error(result.message || "No se pudo activar la suscripción. Inténtalo nuevamente.")
       }
     } catch (error: any) {
-      toast.error(error?.message || "Subscription failed. Please try again.")
+      toast.error(error?.message || "No se pudo activar la suscripción. Inténtalo nuevamente.")
     }
 
   }
@@ -212,10 +213,10 @@ export function AlertFormSection() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
-                Receive Air Quality Alerts
+                Recibe alertas de calidad del aire
               </h2>
               <p className="text-muted-foreground text-lg">
-                We'll notify you when AQI in your area exceeds safe levels.
+                Te notificaremos cuando el AQI en tu zona supere niveles seguros.
               </p>
             </div>
 
@@ -223,12 +224,12 @@ export function AlertFormSection() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-foreground">
-                    First Name
+                    Nombre
                   </Label>
                   <Input
                     id="firstName"
                     type="text"
-                    placeholder="John"
+                    placeholder="Juan"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     required
@@ -238,12 +239,12 @@ export function AlertFormSection() {
 
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-foreground">
-                    Last Name
+                    Apellido
                   </Label>
                   <Input
                     id="lastName"
                     type="text"
-                    placeholder="Doe"
+                    placeholder="Pérez"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     required
@@ -255,12 +256,12 @@ export function AlertFormSection() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-foreground">
-                    Email Address
+                    Correo electrónico
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder="tu@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
@@ -270,7 +271,7 @@ export function AlertFormSection() {
 
                 <div className="space-y-2">
                   <Label htmlFor="age" className="text-foreground">
-                    Age
+                    Edad
                   </Label>
                   <Input
                     id="age"
@@ -288,12 +289,12 @@ export function AlertFormSection() {
 
               <div className="space-y-2 relative">
                 <Label htmlFor="location" className="text-foreground">
-                  Location to Monitor
+                    Ubicación a monitorear
                 </Label>
                 <Input
                   id="location"
                   type="text"
-                  placeholder="Search city or country..."
+                  placeholder="Buscar ciudad o país..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
@@ -318,23 +319,24 @@ export function AlertFormSection() {
                 )}
                 {formData.locationDisplay && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Selected: {formData.locationDisplay}
+                    Seleccionado: {formData.locationDisplay}
                   </p>
                 )}
               </div>
 
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm text-muted-foreground">
-                  ⚠️ <strong>Personalized Alert:</strong> Based on your age, you will receive notifications when AQI exceeds your personalized threshold:
+                  <AlertTriangle className="inline h-4 w-4 mr-1" />
+                  <strong>Alerta personalizada:</strong> Según tu edad, recibirás notificaciones cuando el AQI supere tu umbral personalizado:
                   <br />
                   <span className="text-xs mt-2 block">
-                    • Children (0-12): AQI &gt; 50
+                    • Niños (0-12): AQI &gt; 50
                     <br />
-                    • Teenagers (13-18): AQI &gt; 75
+                    • Adolescentes (13-18): AQI &gt; 75
                     <br />
-                    • Adults (19-64): AQI &gt; 100
+                    • Adultos (19-64): AQI &gt; 100
                     <br />
-                    • Seniors (65+): AQI &gt; 50
+                    • Adultos mayores (65+): AQI &gt; 50
                   </span>
                 </p>
               </div>
@@ -344,7 +346,7 @@ export function AlertFormSection() {
                 className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 py-6 text-lg font-medium"
                 size="lg"
               >
-                Activate Alerts
+                Activar alertas
               </Button>
             </form>
           </div>

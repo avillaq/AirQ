@@ -5,6 +5,7 @@ import './globals.css'
 import { ReactNode } from 'react'
 import type { Viewport } from 'next'
 import { Toaster } from 'sonner'
+import { ModelViewerRegister } from '@/components/model-viewer-register'
 
 export const viewport: Viewport = {
   themeColor: '#000000',
@@ -33,7 +34,6 @@ export default function RootLayout({
           href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css"
           rel="stylesheet"
         />
-        <script defer type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
         <style>{`
           html {
             font-family: ${GeistSans.style.fontFamily};
@@ -43,6 +43,7 @@ export default function RootLayout({
         `}</style>
       </head>
       <body>
+        <ModelViewerRegister />
         <Toaster position="bottom-right" richColors />
         {children}
       </body>

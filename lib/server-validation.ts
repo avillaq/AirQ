@@ -10,20 +10,20 @@ export class ApiValidationError extends Error {
 
 export function toNumber(value: string | null, field: string, min?: number, max?: number): number {
   if (value === null || value === undefined || value === '') {
-    throw new ApiValidationError(`'${field}' is required`);
+    throw new ApiValidationError(`'${field}' es obligatorio`);
   }
 
   const parsed = Number(value);
   if (Number.isNaN(parsed)) {
-    throw new ApiValidationError(`'${field}' must be a valid number`);
+    throw new ApiValidationError(`'${field}' debe ser un número válido`);
   }
 
   if (min !== undefined && parsed < min) {
-    throw new ApiValidationError(`'${field}' must be >= ${min}`);
+    throw new ApiValidationError(`'${field}' debe ser >= ${min}`);
   }
 
   if (max !== undefined && parsed > max) {
-    throw new ApiValidationError(`'${field}' must be <= ${max}`);
+    throw new ApiValidationError(`'${field}' debe ser <= ${max}`);
   }
 
   return parsed;
@@ -31,20 +31,20 @@ export function toNumber(value: string | null, field: string, min?: number, max?
 
 export function toInteger(value: unknown, field: string, min?: number, max?: number): number {
   if (value === null || value === undefined || value === '') {
-    throw new ApiValidationError(`'${field}' is required`);
+    throw new ApiValidationError(`'${field}' es obligatorio`);
   }
 
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) {
-    throw new ApiValidationError(`'${field}' must be an integer`);
+    throw new ApiValidationError(`'${field}' debe ser un número entero`);
   }
 
   if (min !== undefined && parsed < min) {
-    throw new ApiValidationError(`'${field}' must be >= ${min}`);
+    throw new ApiValidationError(`'${field}' debe ser >= ${min}`);
   }
 
   if (max !== undefined && parsed > max) {
-    throw new ApiValidationError(`'${field}' must be <= ${max}`);
+    throw new ApiValidationError(`'${field}' debe ser <= ${max}`);
   }
 
   return parsed;
@@ -52,20 +52,20 @@ export function toInteger(value: unknown, field: string, min?: number, max?: num
 
 export function toString(value: unknown, field: string, minLen?: number, maxLen?: number): string {
   if (value === null || value === undefined) {
-    throw new ApiValidationError(`'${field}' is required`);
+    throw new ApiValidationError(`'${field}' es obligatorio`);
   }
 
   const parsed = String(value).trim();
   if (!parsed) {
-    throw new ApiValidationError(`'${field}' cannot be empty`);
+    throw new ApiValidationError(`'${field}' no puede estar vacío`);
   }
 
   if (minLen !== undefined && parsed.length < minLen) {
-    throw new ApiValidationError(`'${field}' must be at least ${minLen} characters`);
+    throw new ApiValidationError(`'${field}' debe tener al menos ${minLen} caracteres`);
   }
 
   if (maxLen !== undefined && parsed.length > maxLen) {
-    throw new ApiValidationError(`'${field}' must be at most ${maxLen} characters`);
+    throw new ApiValidationError(`'${field}' debe tener como máximo ${maxLen} caracteres`);
   }
 
   return parsed;
@@ -75,7 +75,7 @@ export function toEmail(value: unknown): string {
   const email = toString(value, 'email', 5, 120).toLowerCase();
   const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   if (!re.test(email)) {
-    throw new ApiValidationError("'email' must be a valid email address");
+    throw new ApiValidationError("'email' debe ser un correo electrónico válido");
   }
   return email;
 }
@@ -90,7 +90,7 @@ export function parseLatLngFromLocation(location: unknown): { lat: number; lng: 
   const locationValue = toString(location, 'location', 3, 80);
   const parts = locationValue.split(',').map((part) => part.trim());
   if (parts.length !== 2) {
-    throw new ApiValidationError("'location' must have format 'lat,lng'");
+    throw new ApiValidationError("'location' debe tener el formato 'lat,lng'");
   }
 
   const lat = toNumber(parts[0], 'location.lat', -90, 90);

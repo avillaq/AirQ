@@ -11,6 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.2.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -57,14 +58,14 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.180.0"
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/three": "^0.180.0",
+    "@types/three": "^0.182.0",
     "concurrently": "^9.2.1",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",

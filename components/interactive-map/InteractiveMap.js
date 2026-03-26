@@ -16,11 +16,11 @@ const AVATAR_STATES = {
 
 function getAvatarModelPath(aqi) {
   if (aqi === null || aqi === undefined) return "/models/avatar_coughing.glb";
-  if (aqi <= 25) return "/models/avatar_happy_1.glb";
+  if (aqi <= 25) return "/models/avatar_greeting.glb";
   if (aqi <= 50) return "/models/avatar_greeting.glb";
   if (aqi <= 100) return "/models/avatar_coughing.glb";
-  if (aqi <= 150) return "/models/avatar_sick.glb";
-  return "/models/avatar_critical.glb";
+  if (aqi <= 150) return "/models/avatar_coughing.glb";
+  return "/models/avatar_coughing.glb";
 }
 
 function getLungModelPath(lungHealth) {
@@ -39,19 +39,19 @@ function getAQIClass(aqi) {
 }
 
 function getAQIText(aqi) {
-  if (aqi === null || aqi === undefined) return "Unavailable";
-  if (aqi <= 50) return "Good";
-  if (aqi <= 100) return "Moderate";
-  if (aqi <= 150) return "Harmful";
-  return "Hazardous";
+  if (aqi === null || aqi === undefined) return "No disponible";
+  if (aqi <= 50) return "Bueno";
+  if (aqi <= 100) return "Moderado";
+  if (aqi <= 150) return "Dañino";
+  return "Peligroso";
 }
 
 function getAvatarState(aqi) {
-  if (aqi === null || aqi === undefined) return { src: AVATAR_STATES.moderate, mood: "No Data" };
-  if (aqi <= 50) return { src: AVATAR_STATES.good, mood: "Happy" };
-  if (aqi <= 100) return { src: AVATAR_STATES.moderate, mood: "Coughing" };
-  if (aqi <= 150) return { src: AVATAR_STATES.unhealthy, mood: "Sick" };
-  return { src: AVATAR_STATES.critical, mood: "Dying" };
+  if (aqi === null || aqi === undefined) return { src: AVATAR_STATES.moderate, mood: "Sin datos" };
+  if (aqi <= 50) return { src: AVATAR_STATES.good, mood: "Saludable" };
+  if (aqi <= 100) return { src: AVATAR_STATES.moderate, mood: "Molestia leve" };
+  if (aqi <= 150) return { src: AVATAR_STATES.unhealthy, mood: "Afectado" };
+  return { src: AVATAR_STATES.critical, mood: "Crítico" };
 }
 
 const InteractiveMap = () => {
@@ -66,7 +66,7 @@ const InteractiveMap = () => {
   const [alt, setAlt] = useState(3000);
   const [aqi, setAqi] = useState(null);
   const [aqiSource, setAqiSource] = useState('unavailable');
-  const [aqiStatusMessage, setAqiStatusMessage] = useState('Loading live AQI...');
+  const [aqiStatusMessage, setAqiStatusMessage] = useState('Cargando AQI en vivo...');
   const [locationName, setLocationName] = useState("Arequipa, Peru");
   const [lungHealth, setLungHealth] = useState(100);
   const [timeInLocation, setTimeInLocation] = useState(0);
@@ -110,7 +110,7 @@ const InteractiveMap = () => {
         }).filter(city => city !== null);
         setCities(parsedCities);
       })
-      .catch(error => console.error('Error loading cities:', error));
+      .catch(error => console.error('Error al cargar ciudades:', error));
   }, []);
 
   useEffect(() => {
@@ -213,7 +213,7 @@ const InteractiveMap = () => {
       const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(2275207);
       viewer.scene.primitives.add(tileset);
     } catch (e) {
-      console.error("Error loading tileset:", e);
+      console.error("Error al cargar el tileset:", e);
     }
 
     createCharacterEntity(lon, lat);
@@ -398,20 +398,27 @@ const InteractiveMap = () => {
       if (aqiValue === null || aqiValue === undefined) {
         setAqi(null);
         setAqiSource('unavailable');
-        setAqiStatusMessage('AQI not available for this location');
+        setAqiStatusMessage('AQI no disponible para esta ubicación');
       } else {
         setAqi(aqiValue);
         setAqiSource(airQuality.source || 'real');
-        setAqiStatusMessage('Live AQI');
+        setAqiStatusMessage('AQI en vivo');
       }
 
       setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
     } catch (error) {
       setAqi(null);
       setAqiSource('unavailable');
-      setAqiStatusMessage(error?.message || 'Network error while fetching AQI');
+      setAqiStatusMessage(error?.message || 'Error de red al consultar el AQI');
       setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
     }
+  };
+
+  const parseInputNumber = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return NaN;
+    }
+    return Number(String(value).replace(',', '.'));
   };
 
   const createParticleAnimation = () => {
@@ -452,13 +459,17 @@ const InteractiveMap = () => {
   const flyToLocation = () => {
     const Cesium = window.Cesium;
     const viewer = viewerRef.current;
-    if (!viewer || isNaN(lat) || isNaN(lon) || isNaN(alt)) {
-      alert('Please enter valid coordinates.');
+    const parsedLat = parseInputNumber(lat);
+    const parsedLon = parseInputNumber(lon);
+    const parsedAlt = parseInputNumber(alt);
+
+    if (!viewer || !Number.isFinite(parsedLat) || !Number.isFinite(parsedLon) || !Number.isFinite(parsedAlt)) {
+      alert('Ingresa coordenadas válidas.');
       return;
     }
 
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+      destination: Cesium.Cartesian3.fromDegrees(parsedLon, parsedLat, parsedAlt),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-45),
@@ -466,7 +477,7 @@ const InteractiveMap = () => {
       },
       duration: 3
     });
-    moveCharacterTo(lon, lat);
+    moveCharacterTo(parsedLon, parsedLat);
   };
 
   useEffect(() => {
@@ -483,7 +494,7 @@ const InteractiveMap = () => {
         setLungHealth(100);
         setAqi(null);
         setAqiSource('unavailable');
-        setAqiStatusMessage('Loading live AQI...');
+        setAqiStatusMessage('Cargando AQI en vivo...');
         setLocationName("Arequipa, Peru");
         setTimeInLocation(0);
       }
@@ -513,7 +524,7 @@ const InteractiveMap = () => {
         justifyContent: 'center',
         background: 'hsl(var(--background))'
       }}>
-        <p style={{ color: 'hsl(var(--foreground))' }}>Loading map...</p>
+        <p style={{ color: 'hsl(var(--foreground))' }}>Cargando mapa...</p>
       </div>
     );
   }
@@ -526,16 +537,16 @@ const InteractiveMap = () => {
       <div ref={particlesContainer} className="particles-container" />
 
       <Link href="/" className="home-link">
-        <span className="home-text">Home</span>
+        <span className="home-text">Inicio</span>
       </Link>
 
       <div className="controls">
-        <h3>Search City</h3>
+        <h3>Buscar ciudad</h3>
         <div className="search-container">
           <input
             type="text"
             className="search-input"
-            placeholder="Search city or country..."
+            placeholder="Buscar ciudad o país..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
@@ -556,45 +567,45 @@ const InteractiveMap = () => {
           )}
         </div>
 
-        <h3 style={{ marginTop: 20 }}>Manual Coordinates</h3>
+        <h3 style={{ marginTop: 20 }}>Coordenadas manuales</h3>
         <div className="control-group">
-          <label>Latitude</label>
+          <label>Latitud</label>
           <input
             type="number"
             step="0.0001"
             placeholder="-16.409"
             value={lat}
-            onChange={(e) => setLat(Number(e.target.value))}
+            onChange={(e) => setLat(parseInputNumber(e.target.value))}
           />
         </div>
         <div className="control-group">
-          <label>Longitude</label>
+          <label>Longitud</label>
           <input
             type="number"
             step="0.0001"
             placeholder="-71.5375"
             value={lon}
-            onChange={(e) => setLon(Number(e.target.value))}
+            onChange={(e) => setLon(parseInputNumber(e.target.value))}
           />
         </div>
         <div className="control-group">
-          <label>Altitude</label>
+          <label>Altitud</label>
           <input
             type="number"
             min={100}
             max={50000}
             value={alt}
-            onChange={(e) => setAlt(Number(e.target.value))}
+            onChange={(e) => setAlt(parseInputNumber(e.target.value))}
           />
         </div>
         <div className="control-group">
-          <button onClick={flyToLocation}>Go to Location</button>
+          <button onClick={flyToLocation}>Ir a ubicación</button>
         </div>
       </div>
 
       <div className="status-panels">
         <div className="character-panel">
-          <h3>Your Avatar</h3>
+          <h3>Tu avatar</h3>
           <div className="character-status">
             <div
               className="avatar-3d-container"
@@ -623,24 +634,24 @@ const InteractiveMap = () => {
             </div>
             <div className="character-details">
               <div className="character-mood">{avatarState.mood}</div>
-              <div className="drag-hint">Drag to move</div>
+              <div className="drag-hint">Arrastra para mover</div>
             </div>
           </div>
           <div className={`aqi-indicator ${getAQIClass(aqi)}`}>
             AQI: {getAQIText(aqi)} {aqi !== null && aqi !== undefined ? `(${Math.round(aqi)})` : ''}
           </div>
           <div className="aqi-source-indicator">
-            Source: {aqiSource === 'real' ? 'Live' : aqiSource === 'mock' ? 'Demo' : 'Unavailable'}
+            Fuente: {aqiSource === 'real' ? 'En vivo' : aqiSource === 'mock' ? 'Demostración' : 'No disponible'}
           </div>
           <div className="aqi-status-message">{aqiStatusMessage}</div>
           <div className="location-info">
-            <div>Location: <span>{locationName}</span></div>
-            <div>Time: <span>{timeInLocation}s</span></div>
+            <div>Ubicación: <span>{locationName}</span></div>
+            <div>Tiempo: <span>{timeInLocation}s</span></div>
           </div>
         </div>
 
         <div className="lung-panel">
-          <h3>Lung Health</h3>
+          <h3>Salud pulmonar</h3>
           <div className="lung-model-container">
             {isMounted && (
               <model-viewer
@@ -680,13 +691,13 @@ const InteractiveMap = () => {
             ></div>
           </div>
           <div className="lung-health-text">
-            Health: <span>{Math.round(lungHealth)}%</span>
+            Salud: <span>{Math.round(lungHealth)}%</span>
           </div>
         </div>
       </div>
 
       <div className="coords-display">
-        Lat: {coordsDisplay.lat} | Long: {coordsDisplay.lon} | Alt: {coordsDisplay.alt}m
+        Lat: {coordsDisplay.lat} | Lon: {coordsDisplay.lon} | Alt: {coordsDisplay.alt}m
       </div>
     </div>
   );

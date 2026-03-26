@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, { status: response.status });
   } catch {
     return NextResponse.json(
-      { status: 'error', message: 'Historical NASA service is currently unavailable' },
+      { status: 'error', message: 'El servicio histórico de NASA no está disponible en este momento' },
       { status: 503 }
     );
   }

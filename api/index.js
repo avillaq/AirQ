@@ -32,14 +32,14 @@ function normalizeApiError(error) {
 
   if (!statusCode) {
     return {
-      message: 'Network error: unable to reach API service',
+      message: 'Error de red: no se pudo conectar con el servicio API',
       statusCode: null,
       isNetworkError: true,
     };
   }
 
   return {
-    message: networkMessage || 'Unexpected API error',
+    message: networkMessage || 'Error inesperado en la API',
     statusCode,
     isNetworkError: false,
   };

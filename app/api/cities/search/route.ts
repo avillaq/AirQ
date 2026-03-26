@@ -60,6 +60,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'error', message: error.message }, { status: error.statusCode });
     }
 
-    return NextResponse.json({ status: 'error', message: 'Failed to search cities' }, { status: 500 });
+    return NextResponse.json({ status: 'error', message: 'No se pudieron buscar ciudades' }, { status: 500 });
   }
 }

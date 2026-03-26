@@ -2,11 +2,12 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { AlertTriangle, Droplets, Frown, Info, MapPin, Meh, MinusCircle, Skull, Smile, Thermometer, Wind } from 'lucide-react';
 import './MapView.css';
 import { getAirQualityPoints, getHistoricalMerra2Data, searchCities } from '../../api';
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-if (!token) console.error('Missing NEXT_PUBLIC_MAPBOX_TOKEN');
+if (!token) console.error('Falta NEXT_PUBLIC_MAPBOX_TOKEN');
 mapboxgl.accessToken = token || '';
 
 export default function MapView({
@@ -15,7 +16,7 @@ export default function MapView({
   refreshMs = 60000,
   allowRecenter = true,
   airQualityData = null,
-  locationName = 'Unknown location',
+  locationName = 'Ubicacion desconocida',
   dataSourceStatus = 'unavailable',
   dataStatusMessage = ''
 }) {
@@ -43,7 +44,7 @@ export default function MapView({
           setSuggestions(result.cities || []);
           setShowSuggestions(true);
         } catch (err) {
-          console.error('Error searching cities:', err);
+          console.error('Error al buscar ciudades:', err);
           setSuggestions([]);
         }
       } else {
@@ -57,7 +58,7 @@ export default function MapView({
 
   const handleHistoricalSearch = async () => {
     if (!selectedLocation || !searchDate) {
-      setError('Please select a location and date');
+      setError('Selecciona una ubicacion y una fecha');
       return;
     }
 
@@ -80,8 +81,8 @@ export default function MapView({
         });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch historical data');
-      console.error('Historical data error:', err);
+      setError(err.response?.data?.message || 'No se pudieron obtener los datos historicos');
+      console.error('Error de datos historicos:', err);
     }
   };
 
@@ -99,16 +100,16 @@ export default function MapView({
     if (result.source === 'real') {
       setError(null);
     } else if (result.source === 'unavailable') {
-      setError(result.message || 'Map data unavailable');
+      setError(result.message || 'Datos del mapa no disponibles');
     } else {
-      setError('Using demo data');
+      setError('Usando datos de demostracion');
     }
   }, []);
 
 const resetMap = useCallback(() => {
   if (!mapRef.current) return;
   
-  console.log('🔄 Reseteando mapa...');
+  console.log('Reseteando mapa...');
   
   mapRef.current.flyTo({
     center: [-74.08175, 4.60971], 
@@ -125,7 +126,7 @@ const resetMap = useCallback(() => {
     loadData();
   }, 500); 
   
-  console.log('✅ Mapa reseteado');
+  console.log('Mapa reseteado');
 }, [loadData]);
 
   useEffect(() => {
@@ -202,23 +203,23 @@ const resetMap = useCallback(() => {
         
         // Determinar color según AQI
         let aqiColor = '#2ecc71';
-        let aqiStatus = 'Good';
+        let aqiStatus = 'Bueno';
         
         if (aqi > 300) {
           aqiColor = '#6e2c00';
-          aqiStatus = 'Hazardous';
+          aqiStatus = 'Peligroso';
         } else if (aqi > 200) {
           aqiColor = '#8e44ad';
-          aqiStatus = 'Very Unhealthy';
+          aqiStatus = 'Muy dañino';
         } else if (aqi > 150) {
           aqiColor = '#e74c3c';
-          aqiStatus = 'Unhealthy';
+          aqiStatus = 'Dañino';
         } else if (aqi > 100) {
           aqiColor = '#e67e22';
-          aqiStatus = 'Unhealthy for Sensitive';
+          aqiStatus = 'Dañino para sensibles';
         } else if (aqi > 50) {
           aqiColor = '#f1c40f';
-          aqiStatus = 'Moderate';
+          aqiStatus = 'Moderado';
         }
         
         popup
@@ -226,7 +227,7 @@ const resetMap = useCallback(() => {
           .setHTML(`
             <div style="font-size:13px; padding: 8px; min-width: 200px;">
               <div style="font-weight:700; font-size:14px; margin-bottom: 8px; color: #333;">
-                ${f.properties.name || 'Location'}
+                ${f.properties.name || 'Ubicación'}
               </div>
               <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
                 <div>
@@ -239,7 +240,7 @@ const resetMap = useCallback(() => {
                 </div>
               </div>
               <div style="font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 6px; margin-top: 6px;">
-                ${lastUpdate.includes('Estimated') ? '📊 Estimated data' : `Updated: ${lastUpdate}`}
+                ${lastUpdate.includes('Estimated') ? 'Datos estimados' : `Actualizado: ${lastUpdate}`}
               </div>
             </div>
           `)
@@ -295,7 +296,7 @@ const resetMap = useCallback(() => {
         borderRadius: 12,
         border: '1px solid rgba(239, 68, 68, 0.3)'
       }}>
-        Missing Mapbox token
+        Falta el token de Mapbox
       </div>
     );
   }
@@ -306,9 +307,9 @@ const resetMap = useCallback(() => {
         type="button"
         className="map-refresh-btn"
         onClick={resetMap}
-        title="Refresh data"
+        title="Actualizar datos"
       >
-        Refresh
+        Actualizar
       </button>
 
       {/* Botón para toggle búsqueda histórica */}
@@ -316,21 +317,21 @@ const resetMap = useCallback(() => {
         type="button"
         className="map-historical-btn"
         onClick={() => setShowHistoricalSearch(!showHistoricalSearch)}
-        title="Historical Data Search"
+        title="Busqueda de datos historicos"
       >
-        {showHistoricalSearch ? 'Hide Historical' : 'Show Historical'}
+        {showHistoricalSearch ? 'Ocultar historico' : 'Mostrar historico'}
       </button>
 
       {/* Panel de búsqueda histórica */}
       {showHistoricalSearch && (
         <div className="historical-search-panel">
-          <h3 className="historical-title">Historical Weather Data (MERRA2)</h3>
+          <h3 className="historical-title">Datos meteorologicos historicos (MERRA2)</h3>
           
           <div className="search-input-group">
-            <label>Location</label>
+            <label>Ubicacion</label>
             <input
               type="text"
-              placeholder="Search city..."
+              placeholder="Buscar ciudad..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -358,7 +359,7 @@ const resetMap = useCallback(() => {
           </div>
 
           <div className="search-input-group">
-            <label>Date</label>
+            <label>Fecha</label>
             <input
               type="date"
               value={searchDate}
@@ -370,7 +371,7 @@ const resetMap = useCallback(() => {
           </div>
 
           <div className="search-input-group">
-            <label>Hour (0-23)</label>
+            <label>Hora (0-23)</label>
             <input
               type="number"
               min="0"
@@ -386,7 +387,7 @@ const resetMap = useCallback(() => {
             className="historical-search-btn"
             disabled={!selectedLocation || !searchDate}
           >
-            Search Historical Data
+            Buscar datos historicos
           </button>
         </div>
       )}
@@ -430,7 +431,7 @@ function Legend() {
   
   return (
     <div className="map-legend">
-      <div className="legend-title">AQI Levels</div>
+    <div className="legend-title">Niveles de AQI</div>
       {items.map(i => (
         <div key={i.l} className="legend-row">
           <span className="legend-color" style={{ background: i.c }} />
@@ -445,13 +446,13 @@ function Legend() {
 function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
   // Determine AQI status and styling
   const getAQIStatus = (aqi) => {
-    if (aqi === null || aqi === undefined) return { status: 'Unavailable', color: '#9ca3af', icon: '⚪' };
-    if (aqi <= 50) return { status: 'Good', color: '#00e676', icon: '😊' };
-    if (aqi <= 100) return { status: 'Moderate', color: '#ffeb3b', icon: '😐' };
-    if (aqi <= 150) return { status: 'Unhealthy', color: '#ff9800', icon: '😷' };
-    if (aqi <= 200) return { status: 'Unhealthy', color: '#f44336', icon: '😨' };
-    if (aqi <= 300) return { status: 'Very Unhealthy', color: '#9c27b0', icon: '🤢' };
-    return { status: 'Hazardous', color: '#8d6e63', icon: '☠️' };
+    if (aqi === null || aqi === undefined) return { status: 'No disponible', color: '#9ca3af', icon: MinusCircle };
+    if (aqi <= 50) return { status: 'Bueno', color: '#00e676', icon: Smile };
+    if (aqi <= 100) return { status: 'Moderado', color: '#ffeb3b', icon: Meh };
+    if (aqi <= 150) return { status: 'Dañino', color: '#ff9800', icon: Frown };
+    if (aqi <= 200) return { status: 'Dañino', color: '#f44336', icon: AlertTriangle };
+    if (aqi <= 300) return { status: 'Muy dañino', color: '#9c27b0', icon: AlertTriangle };
+    return { status: 'Peligroso', color: '#8d6e63', icon: Skull };
   };
 
   const aqiInfo = getAQIStatus(data.aqi);
@@ -461,18 +462,19 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
       {/* Header with location and time */}
       <div className="compact-header">
         <div className="compact-location">
+          <MapPin size={14} />
           <span className="location-text">{locationName}</span>
         </div>
         <div className="compact-time">
           {data.timestamp ? new Date(data.timestamp).toLocaleTimeString('en-US', {
             hour: '2-digit', 
             minute: '2-digit' 
-          }) : 'No timestamp'}
+          }) : 'Sin marca de tiempo'}
         </div>
       </div>
 
       <div className={`source-chip source-chip-${sourceStatus}`}>
-        {sourceStatus === 'real' ? 'Live data' : sourceStatus === 'mock' ? 'Demo data' : 'Data unavailable'}
+        {sourceStatus === 'real' ? 'Datos en vivo' : sourceStatus === 'mock' ? 'Datos de demostracion' : 'Datos no disponibles'}
       </div>
 
       {sourceMessage ? (
@@ -481,7 +483,7 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
 
       {/* Main AQI display */}
       <div className="compact-aqi" style={{ borderLeftColor: aqiInfo.color }}>
-        <div className="aqi-icon">{aqiInfo.icon}</div>
+        <div className="aqi-icon"><aqiInfo.icon size={20} /></div>
         <div className="aqi-content">
           <div className="aqi-value-compact" style={{ color: aqiInfo.color }}>
             {data.aqi ?? '--'}
@@ -517,15 +519,15 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
       {/* Weather information */}
       <div className="compact-weather">
         <div className="weather-compact">
-          <span>🌡️</span>
+          <Thermometer size={14} />
           <span>{data.weather.temperature ?? '--'}°C</span>
         </div>
         <div className="weather-compact">
-          <span>💧</span>
+          <Droplets size={14} />
           <span>{data.weather.humidity ?? '--'}%</span>
         </div>
         <div className="weather-compact">
-          <span>💨</span>
+          <Wind size={14} />
           <span>{data.weather.windSpeed ?? '--'} km/h</span>
         </div>
       </div>
@@ -553,15 +555,16 @@ function HistoricalMetrics({ data }) {
     <div className="compact-metrics historical-metrics">
       <div className="compact-header">
         <div className="compact-location">
-          <span className="location-text"> Historical Data</span>
+          <Info size={14} />
+          <span className="location-text"> Datos historicos</span>
         </div>
         <div className="compact-time">
-          {data.datetime.date} at {data.datetime.hour}:00
+          {data.datetime.date} a las {data.datetime.hour}:00
         </div>
       </div>
 
       <div className="historical-location-info">
-        <strong>Location:</strong> {data.location.lat.toFixed(2)}°, {data.location.lng.toFixed(2)}°
+        <strong>Ubicacion:</strong> {data.location.lat.toFixed(2)}°, {data.location.lng.toFixed(2)}°
       </div>
 
       <div className="compact-grid">
@@ -570,17 +573,17 @@ function HistoricalMetrics({ data }) {
           <span className="metric-value-compact">{tempCelsius}</span>
         </div>
         <div className="compact-metric">
-          <span className="metric-label">Humidity</span>
+          <span className="metric-label">Humedad</span>
           <span className="metric-value-compact">{humidity}%</span>
         </div>
         <div className="compact-metric">
-          <span className="metric-label">Wind (m/s)</span>
+          <span className="metric-label">Viento (m/s)</span>
           <span className="metric-value-compact">{windSpeed}</span>
         </div>
       </div>
 
       <div className="historical-note">
-        ℹ️ Data from NASA MERRA-2 Reanalysis
+        Datos de la reanalisis NASA MERRA-2
       </div>
     </div>
   );

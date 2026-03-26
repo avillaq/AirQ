@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(url.toString(), { cache: 'no-store' });
     if (!response.ok) {
       return NextResponse.json(
-        { status: 'error', message: 'Weather provider is currently unavailable' },
+        { status: 'error', message: 'El proveedor meteorológico no está disponible en este momento' },
         { status: 503 }
       );
     }
@@ -46,6 +46,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'error', message: error.message }, { status: error.statusCode });
     }
 
-    return NextResponse.json({ status: 'error', message: 'Unexpected server error' }, { status: 500 });
+    return NextResponse.json({ status: 'error', message: 'Error inesperado del servidor' }, { status: 500 });
   }
 }

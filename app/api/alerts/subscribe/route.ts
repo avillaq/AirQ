@@ -16,10 +16,10 @@ function calculateThreshold(age: number): number {
 }
 
 function getSensitivityGroup(age: number): string {
-  if (age < 13) return 'Children (High Sensitivity)';
-  if (age < 19) return 'Teenagers (Moderate Sensitivity)';
-  if (age < 65) return 'Adults (Normal Sensitivity)';
-  return 'Seniors (High Sensitivity)';
+  if (age < 13) return 'Niños (alta sensibilidad)';
+  if (age < 19) return 'Adolescentes (sensibilidad moderada)';
+  if (age < 65) return 'Adultos (sensibilidad normal)';
+  return 'Adultos mayores (alta sensibilidad)';
 }
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         status: 'ok',
-        message: 'Subscription created successfully',
+        message: 'Suscripción creada correctamente',
         threshold,
         sensitivity_group: getSensitivityGroup(age),
       },
@@ -55,20 +55,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (error?.code === '23505') {
-      return NextResponse.json({ status: 'error', message: 'This email is already subscribed' }, { status: 409 });
+      return NextResponse.json({ status: 'error', message: 'Este correo ya está suscrito' }, { status: 409 });
     }
 
-    if (typeof error?.message === 'string' && error.message.includes('Missing DATABASE_URL')) {
+    if (
+      typeof error?.message === 'string' &&
+      (error.message.includes('Missing DATABASE_URL') || error.message.includes('Missing SUBSCRIPTIONS_DATABASE_URL'))
+    ) {
       return NextResponse.json(
-        { status: 'error', message: 'Subscriptions service is not configured on the server' },
+        { status: 'error', message: 'El servicio de suscripciones no está configurado en el servidor' },
         { status: 503 }
       );
     }
 
     if (['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(error?.code)) {
-      return NextResponse.json({ status: 'error', message: 'Subscriptions database is currently unavailable' }, { status: 503 });
+      return NextResponse.json({ status: 'error', message: 'La base de datos de suscripciones no está disponible en este momento' }, { status: 503 });
     }
 
-    return NextResponse.json({ status: 'error', message: 'Failed to create subscription' }, { status: 500 });
+    return NextResponse.json({ status: 'error', message: 'No se pudo crear la suscripción' }, { status: 500 });
   }
 }
