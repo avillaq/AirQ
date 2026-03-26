@@ -28,7 +28,7 @@ def health_check():
     return jsonify({
         "status": "ok",
         "service": "nasa-history-api",
-        "message": "Historical NASA service is running",
+        "message": "El servicio historico de NASA esta operativo",
         "timestamp": datetime.now().isoformat(),
     }), 200
 
@@ -36,7 +36,7 @@ def health_check():
 # === FUNCIÓN PARA OBTENER DATOS MERRA2 ===
 def get_merra2_data(lat, lon, date_str, hour=0):
     if not EARTHDATA_USER or not EARTHDATA_PASS:
-        logger.warning("EarthData credentials are not configured")
+        logger.warning("Las credenciales de EarthData no estan configuradas")
         return None
 
     base_url = "https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/hyrax/MERRA2/M2T1NXSLV.5.12.4/"
@@ -64,7 +64,7 @@ def get_merra2_data(lat, lon, date_str, hour=0):
         response = session.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
 
         if response.status_code != 200:
-            logger.warning("MERRA2 returned status %s", response.status_code)
+            logger.warning("MERRA2 devolvio estado %s", response.status_code)
             return None
 
         raw_data = response.text
@@ -88,23 +88,23 @@ def get_merra2_data(lat, lon, date_str, hour=0):
                         elif "V2M" in line:
                             data_dict["V2M"] = value
                 except ValueError as e:
-                    logger.debug("Could not parse MERRA2 line value: %s", str(e))
+                    logger.debug("No se pudo parsear el valor de linea MERRA2: %s", str(e))
                     continue
 
         if not data_dict:
-            logger.warning("No MERRA2 values could be parsed for request")
+            logger.warning("No se pudieron parsear valores MERRA2 para la solicitud")
             return None
 
         return data_dict
 
     except requests.exceptions.Timeout:
-        logger.warning("MERRA2 request timed out")
+        logger.warning("La solicitud a MERRA2 excedio el tiempo limite")
         return None
     except requests.exceptions.RequestException as e:
-        logger.warning("MERRA2 connection error: %s", str(e))
+        logger.warning("Error de conexion con MERRA2: %s", str(e))
         return None
     except Exception as e:
-        logger.exception("Unexpected MERRA2 processing error: %s", str(e))
+        logger.exception("Error inesperado procesando MERRA2: %s", str(e))
         return None
 
 
@@ -122,7 +122,7 @@ def get_historical_merra2():
         if merra_data is None:
             return jsonify({
                 "status": "error",
-                "message": "Failed to retrieve MERRA2 data. Check if the date is valid (1980-present)."
+                "message": "No se pudieron obtener datos MERRA2. Verifica que la fecha sea valida (1980-presente)."
             }), 500
 
         return jsonify({
@@ -154,5 +154,5 @@ def get_historical_merra2():
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Internal server error: {str(e)}"
+            "message": f"Error interno del servidor: {str(e)}"
         }), 500

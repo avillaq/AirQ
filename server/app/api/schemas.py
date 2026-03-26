@@ -15,18 +15,18 @@ class ValidationError(Exception):
 def _parse_float(value, field_name, min_value=None, max_value=None, required=True):
     if value is None:
         if required:
-            raise ValidationError(f"'{field_name}' is required")
+            raise ValidationError(f"'{field_name}' es obligatorio")
         return None
 
     try:
         parsed = float(value)
     except (TypeError, ValueError):
-        raise ValidationError(f"'{field_name}' must be a valid number")
+        raise ValidationError(f"'{field_name}' debe ser un numero valido")
 
     if min_value is not None and parsed < min_value:
-        raise ValidationError(f"'{field_name}' must be >= {min_value}")
+        raise ValidationError(f"'{field_name}' debe ser >= {min_value}")
     if max_value is not None and parsed > max_value:
-        raise ValidationError(f"'{field_name}' must be <= {max_value}")
+        raise ValidationError(f"'{field_name}' debe ser <= {max_value}")
 
     return parsed
 
@@ -34,18 +34,18 @@ def _parse_float(value, field_name, min_value=None, max_value=None, required=Tru
 def _parse_int(value, field_name, min_value=None, max_value=None, required=True):
     if value is None:
         if required:
-            raise ValidationError(f"'{field_name}' is required")
+            raise ValidationError(f"'{field_name}' es obligatorio")
         return None
 
     try:
         parsed = int(value)
     except (TypeError, ValueError):
-        raise ValidationError(f"'{field_name}' must be an integer")
+        raise ValidationError(f"'{field_name}' debe ser un numero entero")
 
     if min_value is not None and parsed < min_value:
-        raise ValidationError(f"'{field_name}' must be >= {min_value}")
+        raise ValidationError(f"'{field_name}' debe ser >= {min_value}")
     if max_value is not None and parsed > max_value:
-        raise ValidationError(f"'{field_name}' must be <= {max_value}")
+        raise ValidationError(f"'{field_name}' debe ser <= {max_value}")
 
     return parsed
 
@@ -53,17 +53,17 @@ def _parse_int(value, field_name, min_value=None, max_value=None, required=True)
 def _parse_str(value, field_name, min_len=None, max_len=None, required=True):
     if value is None:
         if required:
-            raise ValidationError(f"'{field_name}' is required")
+            raise ValidationError(f"'{field_name}' es obligatorio")
         return None
 
     parsed = str(value).strip()
     if required and not parsed:
-        raise ValidationError(f"'{field_name}' cannot be empty")
+        raise ValidationError(f"'{field_name}' no puede estar vacio")
 
     if min_len is not None and len(parsed) < min_len:
-        raise ValidationError(f"'{field_name}' must be at least {min_len} characters")
+        raise ValidationError(f"'{field_name}' debe tener al menos {min_len} caracteres")
     if max_len is not None and len(parsed) > max_len:
-        raise ValidationError(f"'{field_name}' must be at most {max_len} characters")
+        raise ValidationError(f"'{field_name}' debe tener como maximo {max_len} caracteres")
 
     return parsed
 
@@ -71,7 +71,7 @@ def _parse_str(value, field_name, min_len=None, max_len=None, required=True):
 def _parse_email(value):
     email = _parse_str(value, "email", min_len=5, max_len=120)
     if not EMAIL_REGEX.match(email):
-        raise ValidationError("'email' must be a valid email address")
+        raise ValidationError("'email' debe ser un correo electronico valido")
     return email.lower()
 
 
@@ -79,7 +79,7 @@ def _parse_location(value):
     location = _parse_str(value, "location", min_len=3, max_len=80)
     parts = [part.strip() for part in location.split(",")]
     if len(parts) != 2:
-        raise ValidationError("'location' must have format 'lat,lng'")
+        raise ValidationError("'location' debe tener el formato 'lat,lng'")
 
     lat = _parse_float(parts[0], "location.lat", min_value=-90, max_value=90)
     lng = _parse_float(parts[1], "location.lng", min_value=-180, max_value=180)
@@ -110,7 +110,7 @@ class SubscriptionSchema:
     @staticmethod
     def validate(payload):
         if not isinstance(payload, dict):
-            raise ValidationError("JSON body is required")
+            raise ValidationError("El cuerpo JSON es obligatorio")
 
         first_name = _parse_str(payload.get("firstName"), "firstName", min_len=2, max_len=40)
         last_name = _parse_str(payload.get("lastName"), "lastName", min_len=2, max_len=40)
@@ -147,7 +147,7 @@ class HistoricalMerra2QuerySchema:
         try:
             datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            raise ValidationError("'date' must have format YYYY-MM-DD")
+            raise ValidationError("'date' debe tener el formato YYYY-MM-DD")
 
         return {
             "lat": lat,
