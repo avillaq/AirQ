@@ -26,7 +26,6 @@ export function FooterSection() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Navegación</h4>
             <nav className="flex flex-col gap-2">
               <Link
                 href="/"
@@ -51,7 +50,6 @@ export function FooterSection() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Información</h4>
             <nav className="flex flex-col gap-2">
               <Link
                 href="#aqi-section"

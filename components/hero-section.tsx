@@ -12,6 +12,7 @@ export function HeroSection() {
   useEffect(() => {
     const container = threeContainerRef.current
     if (!container) return
+    const isMobile = window.innerWidth < 768
 
     const scene = new THREE.Scene()
 
@@ -23,8 +24,8 @@ export function HeroSection() {
     )
     camera.position.set(0, 0, 600)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 1.35))
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.domElement.style.display = "block"
     renderer.domElement.style.position = "fixed"
@@ -122,7 +123,7 @@ export function HeroSection() {
       }
     }
 
-    function createNoiseCloudTexture(size = 512, noiseScale = 3) {
+    function createNoiseCloudTexture(size = 256, noiseScale = 2.4) {
       const canvas = document.createElement("canvas")
       canvas.width = size
       canvas.height = size
@@ -173,7 +174,7 @@ export function HeroSection() {
       return tex
     }
 
-    const cloudTexture = createNoiseCloudTexture(512, 3)
+    const cloudTexture = createNoiseCloudTexture(isMobile ? 192 : 256, isMobile ? 2.1 : 2.4)
 
     function createCloudGroup(texture: THREE.Texture, parts = 5) {
       const group = new THREE.Group()
@@ -181,7 +182,7 @@ export function HeroSection() {
         const mat = new THREE.SpriteMaterial({
           map: texture,
           transparent: true,
-          opacity: 0.9 - Math.random() * 0.5,
+          opacity: 0.8 - Math.random() * 0.45,
           depthWrite: false,
         })
         const s = new THREE.Sprite(mat)
@@ -196,6 +197,7 @@ export function HeroSection() {
         )
 
         mat.rotation = (Math.random() - 0.5) * 0.9
+        s.userData.rotationSpeed = (Math.random() - 0.5) * 0.0005
         group.add(s)
       }
       return group
@@ -207,12 +209,12 @@ export function HeroSection() {
       baseScale: number
     }
     const clouds: Cloud[] = []
-    const cloudCount = 18
+    const cloudCount = isMobile ? 8 : 12
     const cloudSpritesForRaycast: THREE.Object3D[] = []
     const spriteToCloudMap = new WeakMap<THREE.Object3D, Cloud>()
 
     for (let i = 0; i < cloudCount; i++) {
-      const parts = 3 + Math.floor(Math.random() * 4)
+      const parts = 2 + Math.floor(Math.random() * (isMobile ? 2 : 3))
       const grp = createCloudGroup(cloudTexture, parts)
 
       const x = (Math.random() - 0.5) * window.innerWidth * 1.6
@@ -233,42 +235,24 @@ export function HeroSection() {
       const cloudObj: Cloud = { group: grp, velocity, baseScale }
       clouds.push(cloudObj)
 
-      grp.children.forEach((child) => {
-        cloudSpritesForRaycast.push(child)
-        spriteToCloudMap.set(child, cloudObj)
-      })
+      const interactiveChild = grp.children[0]
+      if (interactiveChild) {
+        cloudSpritesForRaycast.push(interactiveChild)
+        spriteToCloudMap.set(interactiveChild, cloudObj)
+      }
     }
 
     // Raycaster
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2(-10, -10)
 
+    let pointerDirty = false
+    let lastRaycastTime = 0
+
     const onMouseMove = (e: MouseEvent) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      raycaster.setFromCamera(mouse, camera)
-      const intersects = raycaster.intersectObjects(cloudSpritesForRaycast)
-
-      if (intersects.length > 0) {
-        for (const inter of intersects.slice(0, 6)) {
-          const obj = inter.object
-          const cloud = spriteToCloudMap.get(obj)
-          if (!cloud) continue
-
-          const pushDir = new THREE.Vector3()
-            .subVectors(
-              cloud.group.position,
-              new THREE.Vector3(inter.point.x, inter.point.y, cloud.group.position.z)
-            )
-            .normalize()
-          const strength = 0.15 + Math.random() * 0.15
-          cloud.velocity.add(pushDir.multiplyScalar(strength))
-
-          const target = cloud.baseScale * (1.05 + Math.random() * 0.10)
-          cloud.group.scale.lerp(new THREE.Vector3(target, target, target), 0.25)
-        }
-      }
+      pointerDirty = true
     }
     window.addEventListener("mousemove", onMouseMove)
 
@@ -279,11 +263,43 @@ export function HeroSection() {
     }
     window.addEventListener("resize", onResize)
 
+    let rafId = 0
     let last = performance.now()
+    const targetFrameTime = isMobile ? 1000 / 24 : 1000 / 30
     const animate = () => {
+      rafId = requestAnimationFrame(animate)
       const now = performance.now()
-      const dt = Math.min(0.05, (now - last) / 1000)
+      const elapsed = now - last
+      if (elapsed < targetFrameTime) return
+      const dt = Math.min(0.05, elapsed / 1000)
       last = now
+
+      if (pointerDirty && now - lastRaycastTime > 120) {
+        pointerDirty = false
+        lastRaycastTime = now
+
+        raycaster.setFromCamera(mouse, camera)
+        const intersects = raycaster.intersectObjects(cloudSpritesForRaycast)
+
+        if (intersects.length > 0) {
+          for (const inter of intersects.slice(0, 3)) {
+            const obj = inter.object
+            const cloud = spriteToCloudMap.get(obj)
+            if (!cloud) continue
+
+            const pushDir = new THREE.Vector3()
+              .subVectors(
+                cloud.group.position,
+                new THREE.Vector3(inter.point.x, inter.point.y, cloud.group.position.z)
+              )
+              .normalize()
+            cloud.velocity.add(pushDir.multiplyScalar(0.18))
+
+            const target = cloud.baseScale * 1.08
+            cloud.group.scale.lerp(new THREE.Vector3(target, target, target), 0.25)
+          }
+        }
+      }
 
       for (const c of clouds) {
         c.velocity.multiplyScalar(0.96)
@@ -304,17 +320,17 @@ export function HeroSection() {
 
         for (const child of c.group.children) {
           if (child instanceof THREE.Sprite) {
-            child.material.rotation += 0.0005 * (1 + Math.random())
+            child.material.rotation += child.userData.rotationSpeed ?? 0.0002
           }
         }
       }
 
       renderer.render(scene, camera)
-      requestAnimationFrame(animate)
     }
     animate()
 
     return () => {
+      cancelAnimationFrame(rafId)
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("resize", onResize)
       if (renderer.domElement && renderer.domElement.parentElement) {
