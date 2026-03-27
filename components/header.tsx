@@ -2,14 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 
 export function Header() {
   const navItems = [
-    { name: "Inicio", href: "/" },
-    { name: "Mapa Interactivo", href: "/interactive-map" },
     { name: "Compuestos del Aire", href: "#aqi-section" },
+    { name: "Mapa en Vivo", href: "#map-section" },
     { name: "Alertas", href: "#alert-form" },
   ]
 
@@ -45,7 +44,13 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="#alert-form" className="hidden lg:block">
+          <Link href="/interactive-map" className="hidden lg:block">
+            <Button variant="outline" className="px-6 py-2 rounded-full font-medium text-sm">
+              Mapa Completo
+            </Button>
+          </Link>
+
+          <Link href="#alert-form" onClick={(e) => handleScroll(e, "#alert-form")} className="hidden lg:block">
             <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-2 rounded-full font-medium shadow-sm text-sm">
               Recibir Alertas
             </Button>
@@ -58,7 +63,12 @@ export function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px]">
+            <SheetContent
+              side="right"
+              className="w-[300px]"
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <SheetTitle className="sr-only">Menu de navegacion</SheetTitle>
               <div className="flex flex-col gap-6 mt-8">
                 <div className="flex flex-col gap-2">
                   <span className="text-foreground text-lg font-semibold">Monitor de Calidad del Aire</span>
@@ -76,11 +86,19 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                <Link href="#alert-form" className="w-full mt-2">
+                <div className="grid grid-cols-1 gap-3 mt-2">
+                  <Link href="/interactive-map" className="w-full">
+                    <Button variant="outline" className="px-6 py-3 rounded-full font-medium w-full">
+                      Ver Mapa Completo
+                    </Button>
+                  </Link>
+
+                  <Link href="#alert-form" onClick={(e) => handleScroll(e, "#alert-form")} className="w-full">
                   <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-3 rounded-full font-medium shadow-sm w-full">
                     Recibir Alertas
                   </Button>
-                </Link>
+                  </Link>
+                </div>
               </div>
             </SheetContent>
           </Sheet>

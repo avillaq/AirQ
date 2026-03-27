@@ -107,7 +107,7 @@ export function MapBox() {
   }, [selectedLocation]);
 
   return (
-    <section className="w-full">
+    <section id="map-section" className="w-full">
       <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-6 text-center">
         Mapa de calidad del aire
       </h3>

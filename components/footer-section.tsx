@@ -26,18 +26,21 @@ export function FooterSection() {
           </div>
 
           <div className="flex flex-col gap-3">
+            <h4 className="text-foreground text-sm font-semibold">Secciones</h4>
             <nav className="flex flex-col gap-2">
               <Link
-                href="/"
+                href="#aqi-section"
+                onClick={(e) => handleScroll(e, "#aqi-section")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Inicio
+                Compuestos del aire
               </Link>
               <Link
-                href="/interactive-map"
+                href="#map-section"
+                onClick={(e) => handleScroll(e, "#map-section")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Mapa Interactivo
+                Mapa en vivo
               </Link>
               <Link
                 href="#alert-form"
@@ -50,27 +53,26 @@ export function FooterSection() {
           </div>
 
           <div className="flex flex-col gap-3">
+            <h4 className="text-foreground text-sm font-semibold">Herramientas</h4>
             <nav className="flex flex-col gap-2">
               <Link
-                href="#aqi-section"
-                onClick={(e) => handleScroll(e, "#aqi-section")}
+                href="/interactive-map"
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Compuestos del Aire
+                Mapa interactivo completo
               </Link>
               <Link
-                href="#aqi-section"
-                onClick={(e) => handleScroll(e, "#aqi-section")}
+                href="/"
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Efectos en la Salud
+                Inicio
               </Link>
               <Link
-                href="#aqi-section"
-                onClick={(e) => handleScroll(e, "#aqi-section")}
+                href="#alert-form"
+                onClick={(e) => handleScroll(e, "#alert-form")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Por Qué Monitorear la Calidad
+                Suscribirme a alertas
               </Link>
             </nav>
           </div>

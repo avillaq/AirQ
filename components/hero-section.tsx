@@ -388,10 +388,11 @@ export function HeroSection() {
       <div className="relative z-10 flex flex-col items-center justify-center flex-1 space-y-6 px-4 pt-32 pb-16">
         <div className="absolute inset-x-2 -inset-y-4 -z-10 rounded-3xl bg-black/25 blur-2xl md:inset-x-10" />
         <h1 className="text-foreground text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
-          Monitorea la Calidad del Aire en Tiempo Real
+          Calidad del aire en tiempo real
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl lg:text-2xl font-medium leading-relaxed max-w-3xl drop-shadow-lg">
-          Obtén información precisa sobre la calidad del aire y recibe alertas cuando los niveles de AQI superen los límites saludables.
+          Visualiza el AQI de tu zona, identifica contaminantes clave y activa alertas
+          cuando los niveles superen rangos saludables.
         </p>
 
         <Link href="/interactive-map" className="pt-6">
