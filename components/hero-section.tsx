@@ -369,15 +369,15 @@ export function HeroSection() {
 
       <div className="relative z-10 flex flex-col items-center justify-center flex-1 space-y-6 px-4 pt-32 pb-16">
         <h1 className="text-foreground text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
-          Monitor Air Quality in Real Time
+          Monitorea la Calidad del Aire en Tiempo Real
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl lg:text-2xl font-medium leading-relaxed max-w-3xl drop-shadow-lg">
-          Get accurate information about air quality and receive alerts when AQI levels exceed healthy limits.
+          Obtén información precisa sobre la calidad del aire y recibe alertas cuando los niveles de AQI superen los límites saludables.
         </p>
 
         <Link href="/interactive-map" className="pt-6">
           <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-10 py-6 rounded-full font-semibold text-lg shadow-2xl ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
-            Explore Interactive Map
+        Explorar Mapa Interactivo
           </Button>
         </Link>
       </div>

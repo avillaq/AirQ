@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata = {
-  title: 'Misti Skies - Calidad del Aire',
+  title: 'AirQ - Calidad del Aire',
   description: 'Monitorea la calidad del aire en tiempo real con visualizaciones interactivas',
   icons: {
     icon: '/favicon.ico',

@@ -7,10 +7,10 @@ import { Menu } from "lucide-react"
 
 export function Header() {
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Interactive Map", href: "/interactive-map" },
-    { name: "Air Compounds", href: "#aqi-section" },
-    { name: "Alerts", href: "#alert-form" },
+    { name: "Inicio", href: "/" },
+    { name: "Mapa Interactivo", href: "/interactive-map" },
+    { name: "Compuestos del Aire", href: "#aqi-section" },
+    { name: "Alertas", href: "#alert-form" },
   ]
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -27,12 +27,10 @@ export function Header() {
   return (
     <header className="w-full py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
         <Link href="/" className="flex-shrink-0">
-          <span className="text-foreground text-xl font-semibold cursor-pointer">LungTrack</span>
+          <span className="text-foreground text-xl font-semibold cursor-pointer">AirQ</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
           {navItems.map((item) => (
             <Link
@@ -46,15 +44,13 @@ export function Header() {
           ))}
         </nav>
 
-        {/* CTA Button & Mobile Menu */}
         <div className="flex items-center gap-3">
           <Link href="#alert-form" className="hidden lg:block">
             <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-2 rounded-full font-medium shadow-sm text-sm">
-              Get Alerts
+              Recibir Alertas
             </Button>
           </Link>
 
-          {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
               <Button variant="ghost" size="icon">
@@ -66,7 +62,7 @@ export function Header() {
               <div className="flex flex-col gap-6 mt-8">
                 <div className="flex flex-col gap-2">
                   <span className="text-foreground text-lg font-semibold">AirQuality Monitor</span>
-                  <span className="text-muted-foreground text-sm">Navigate</span>
+                  <span className="text-muted-foreground text-sm">Navegar</span>
                 </div>
                 <nav className="flex flex-col gap-3">
                   {navItems.map((item) => (
@@ -82,7 +78,7 @@ export function Header() {
                 </nav>
                 <Link href="#alert-form" className="w-full mt-2">
                   <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-3 rounded-full font-medium shadow-sm w-full">
-                    Get Alerts
+                    Recibir Alertas
                   </Button>
                 </Link>
               </div>
