@@ -215,7 +215,7 @@ export function AlertFormSection() {
               <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
                 Recibe alertas de calidad del aire
               </h2>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-foreground/80 text-lg">
                 Te notificaremos cuando el AQI en tu zona supere niveles seguros.
               </p>
             </div>
@@ -318,14 +318,14 @@ export function AlertFormSection() {
                   </div>
                 )}
                 {formData.locationDisplay && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-foreground/75 mt-1">
                     Seleccionado: {formData.locationDisplay}
                   </p>
                 )}
               </div>
 
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground/85">
                   <AlertTriangle className="inline h-4 w-4 mr-1" />
                   <strong>Alerta personalizada:</strong> Según tu edad, recibirás notificaciones cuando el AQI supere tu umbral personalizado:
                   <br />

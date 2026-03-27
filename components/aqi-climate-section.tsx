@@ -86,7 +86,7 @@ export function AQIClimateSection() {
                 {/* Description */}
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm font-medium text-foreground/90 leading-relaxed">
+                    <p className="text-sm font-medium text-foreground leading-relaxed">
                       {compound.description}
                     </p>
                   </div>
@@ -95,7 +95,7 @@ export function AQIClimateSection() {
                   <div className="pt-3 border-t border-border">
                     <div className="flex items-start gap-2">
                       <Activity className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-sm text-foreground/85 leading-relaxed">
                         <span className="font-semibold text-foreground">Efectos: </span>
                         {compound.effects}
                       </p>
@@ -117,7 +117,7 @@ export function AQIClimateSection() {
             <h3 className="text-2xl font-semibold text-foreground">
               ¿Por qué es importante monitorear la calidad del aire?
             </h3>
-            <p className="text-muted-foreground text-base max-w-3xl leading-relaxed">
+            <p className="text-foreground/85 text-base max-w-3xl leading-relaxed">
               La exposición prolongada al aire contaminado puede tener efectos graves en la salud.
               Monitorear estos contaminantes te permite tomar decisiones informadas sobre cuándo
               realizar actividades al aire libre, usar protección respiratoria o permanecer en interiores,

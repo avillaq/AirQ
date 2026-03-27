@@ -18,74 +18,64 @@ export function FooterSection() {
     <footer className="w-full border-t border-border mt-20">
       <div className="max-w-7xl mx-auto px-5 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand Section */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-foreground text-lg font-semibold">AirQuality Monitor</h3>
+            <h3 className="text-foreground text-lg font-semibold">Monitor de Calidad del Aire</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Real-time air quality monitoring for your health and well-being. Stay informed about the air you breathe.
+              Monitoreo en tiempo real de la calidad del aire para tu salud y bienestar. Mantente informado sobre el aire que respiras.
             </p>
           </div>
 
-          {/* Navigation Section */}
           <div className="flex flex-col gap-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Navigation</h4>
+            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Navegación</h4>
             <nav className="flex flex-col gap-2">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Home
+                Inicio
               </Link>
-              <Link 
-                href="/interactive-map" 
+              <Link
+                href="/interactive-map"
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Interactive Map
+                Mapa Interactivo
               </Link>
-              <Link 
-                href="#alert-form" 
+              <Link
+                href="#alert-form"
                 onClick={(e) => handleScroll(e, "#alert-form")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Alerts
+                Alertas
               </Link>
             </nav>
           </div>
 
-          {/* Information Section */}
           <div className="flex flex-col gap-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Information</h4>
+            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wide">Información</h4>
             <nav className="flex flex-col gap-2">
-              <Link 
-                href="#aqi-section" 
+              <Link
+                href="#aqi-section"
                 onClick={(e) => handleScroll(e, "#aqi-section")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Air Compounds
+                Compuestos del Aire
               </Link>
-              <Link 
-                href="#aqi-section" 
+              <Link
+                href="#aqi-section"
                 onClick={(e) => handleScroll(e, "#aqi-section")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Health Effects
+                Efectos en la Salud
               </Link>
-              <Link 
-                href="#aqi-section" 
+              <Link
+                href="#aqi-section"
                 onClick={(e) => handleScroll(e, "#aqi-section")}
                 className="text-muted-foreground text-sm hover:text-primary transition-colors"
               >
-                Why Monitor AQI
+                Por Qué Monitorear la Calidad
               </Link>
             </nav>
           </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-border">
-          <p className="text-center text-muted-foreground text-xs">
-            Built for monitoring and protecting public health through air quality awareness
-          </p>
         </div>
       </div>
     </footer>

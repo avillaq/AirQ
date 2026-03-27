@@ -61,7 +61,7 @@ export function Header() {
             <SheetContent side="right" className="w-[300px]">
               <div className="flex flex-col gap-6 mt-8">
                 <div className="flex flex-col gap-2">
-                  <span className="text-foreground text-lg font-semibold">AirQuality Monitor</span>
+                  <span className="text-foreground text-lg font-semibold">Monitor de Calidad del Aire</span>
                   <span className="text-muted-foreground text-sm">Navegar</span>
                 </div>
                 <nav className="flex flex-col gap-3">

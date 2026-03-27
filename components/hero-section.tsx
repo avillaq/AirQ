@@ -15,7 +15,6 @@ export function HeroSection() {
 
     const scene = new THREE.Scene()
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(
       50,
       window.innerWidth / window.innerHeight,
@@ -34,7 +33,6 @@ export function HeroSection() {
     renderer.domElement.style.zIndex = "0"
     container.appendChild(renderer.domElement)
 
-    // Soft lighting
     const ambient = new THREE.AmbientLight(0xffffff, 0.9)
     scene.add(ambient)
     const directional = new THREE.DirectionalLight(0xffffff, 0.6)
@@ -138,7 +136,6 @@ export function HeroSection() {
           const nx = x / size
           const ny = y / size
 
-          // Multi-octave noise
           let v = 0
           let freq = 1
           let amp = 1
@@ -178,7 +175,6 @@ export function HeroSection() {
 
     const cloudTexture = createNoiseCloudTexture(512, 3)
 
-    // ---------- group clouds ----------
     function createCloudGroup(texture: THREE.Texture, parts = 5) {
       const group = new THREE.Group()
       for (let i = 0; i < parts; i++) {
@@ -205,7 +201,6 @@ export function HeroSection() {
       return group
     }
 
-    // ---------- build clouds ----------
     type Cloud = {
       group: THREE.Group
       velocity: THREE.Vector3
@@ -345,11 +340,18 @@ export function HeroSection() {
       className="flex flex-col items-center text-center relative w-full min-h-screen"
       style={{ minHeight: "100vh" }}
     >
-      {/* background degrader */}
       <div
         className="fixed inset-0 -z-10"
         style={{
-          background: `linear-gradient(180deg, rgba(15, 18, 17, 0.95) 0%, rgba(160, 235, 222, 0.15) 50%, rgba(120, 252, 214, 0.25) 100%)`,
+          background: `linear-gradient(180deg, rgba(15, 18, 17, 0.98) 0%, rgba(160, 235, 222, 0.22) 50%, rgba(120, 252, 214, 0.30) 100%)`,
+        }}
+      />
+
+      <div
+        className="fixed inset-0 z-[5] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 34%, rgba(8, 11, 10, 0.56) 0%, rgba(8, 11, 10, 0.34) 34%, rgba(8, 11, 10, 0.12) 66%, rgba(8, 11, 10, 0) 100%)",
         }}
       />
 
@@ -368,6 +370,7 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center flex-1 space-y-6 px-4 pt-32 pb-16">
+        <div className="absolute inset-x-2 -inset-y-4 -z-10 rounded-3xl bg-black/25 blur-2xl md:inset-x-10" />
         <h1 className="text-foreground text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
           Monitorea la Calidad del Aire en Tiempo Real
         </h1>
