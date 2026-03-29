@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import type { HTMLAttributes, ReactNode } from "react"
 
-interface AnimatedSectionProps extends HTMLAttributes<HTMLDivElement> {
+interface AnimatedSectionProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration'> {
   children: ReactNode
   delay?: number
 }
