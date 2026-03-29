@@ -102,8 +102,9 @@ export function AlertFormSection() {
       } else {
         toast.error(result.message || "No se pudo activar la suscripción. Inténtalo nuevamente.")
       }
-    } catch (error: any) {
-      toast.error(error?.message || "No se pudo activar la suscripción. Inténtalo nuevamente.")
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo activar la suscripción. Inténtalo nuevamente."
+      toast.error(message)
     }
 
   }

@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { getAirQualityData } from '../../api';
 import Link from 'next/link';
 import { getUsAqiCategory } from '@/lib/aqi';
+import type {
+  AirQualityResponse,
+  AqiSource,
+  CesiumEntity,
+  CesiumViewer,
+  City,
+  CoordsDisplay,
+} from '@/types/interactive-map';
 import "./InteractiveMap.css";
 
 const CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN;
@@ -15,29 +23,29 @@ const AVATAR_STATES = {
   critical: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cpath d='M45 42 Q50 38 55 42' stroke='%23000' stroke-width='2' fill='none'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%23ef4444'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E"
 };
 
-function getAvatarModelPath(aqi) {
+function getAvatarModelPath(aqi: number | null) {
   if (aqi === null || aqi === undefined) return "/models/avatar_coughing.glb";
   if (aqi <= 100) return "/models/avatar_greeting.glb";
   if (aqi <= 200) return "/models/avatar_coughing.glb";
   return "/models/avatar_coughing.glb";
 }
 
-function getLungModelPath(lungHealth) {
+function getLungModelPath(lungHealth: number) {
   if (lungHealth > 75) return "/models/lung_healthy.glb";
   if (lungHealth > 50) return "/models/lung_moderate.glb";
   if (lungHealth > 25) return "/models/lung_unhealthy.glb";
   return "/models/lung_dead.glb";
 }
 
-function getAQIClass(aqi) {
+function getAQIClass(aqi: number | null) {
   return getUsAqiCategory(aqi).className;
 }
 
-function getAQIText(aqi) {
+function getAQIText(aqi: number | null) {
   return getUsAqiCategory(aqi).labelEs;
 }
 
-function getAvatarState(aqi) {
+function getAvatarState(aqi: number | null) {
   const category = getUsAqiCategory(aqi).key;
 
   if (category === 'unavailable') return { src: AVATAR_STATES.moderate, mood: "Sin datos" };
@@ -50,36 +58,36 @@ function getAvatarState(aqi) {
 }
 
 const InteractiveMap = () => {
-  const cesiumContainer = useRef(null);
-  const particlesContainer = useRef(null);
-  const lungModelRef = useRef(null);
-  const avatarModelViewerRef = useRef(null);
+  const cesiumContainer = useRef<HTMLDivElement | null>(null);
+  const particlesContainer = useRef<HTMLDivElement | null>(null);
+  const lungModelRef = useRef<HTMLElement | null>(null);
+  const avatarModelViewerRef = useRef<HTMLElement | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   const [lat, setLat] = useState(-16.409);
   const [lon, setLon] = useState(-71.5375);
   const [alt, setAlt] = useState(3000);
-  const [aqi, setAqi] = useState(null);
-  const [aqiSource, setAqiSource] = useState('unavailable');
+  const [aqi, setAqi] = useState<number | null>(null);
+  const [aqiSource, setAqiSource] = useState<AqiSource>('unavailable');
   const [aqiStatusMessage, setAqiStatusMessage] = useState('Cargando AQI en vivo...');
   const [locationName, setLocationName] = useState("Arequipa, Peru");
   const [lungHealth, setLungHealth] = useState(100);
   const [timeInLocation, setTimeInLocation] = useState(0);
-  const [coordsDisplay, setCoordsDisplay] = useState({
-    lat: -16.409,
-    lon: -71.5375,
+  const [coordsDisplay, setCoordsDisplay] = useState<CoordsDisplay>({
+    lat: '-16.4090',
+    lon: '-71.5375',
     alt: 3000
   });
   const [isDragging, setIsDragging] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [cities, setCities] = useState([]);
-  const [filteredCities, setFilteredCities] = useState([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [filteredCities, setFilteredCities] = useState<City[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const viewerRef = useRef(null);
-  const characterEntityRef = useRef(null);
-  const timerRef = useRef(null);
+  const viewerRef = useRef<CesiumViewer | null>(null);
+  const characterEntityRef = useRef<CesiumEntity | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -90,7 +98,7 @@ const InteractiveMap = () => {
       .then(response => response.text())
       .then(data => {
         const lines = data.split('\n').slice(1);
-        const parsedCities = lines.map(line => {
+        const parsedCities = lines.map((line): City | null => {
           const match = line.match(/"([^"]*)","([^"]*)","([^"]*)","([^"]*)","([^"]*)"/);
           if (match) {
             return {
@@ -102,7 +110,7 @@ const InteractiveMap = () => {
             };
           }
           return null;
-        }).filter(city => city !== null);
+        }).filter((city): city is City => city !== null);
         setCities(parsedCities);
       })
       .catch(error => console.error('Error al cargar ciudades:', error));
@@ -124,7 +132,7 @@ const InteractiveMap = () => {
     }
   }, [searchQuery, cities]);
 
-  const handleCitySelect = (city) => {
+  const handleCitySelect = (city: City) => {
     setLat(city.lat);
     setLon(city.lng);
     setAlt(3000);
@@ -149,7 +157,7 @@ const InteractiveMap = () => {
   };
 
   useEffect(() => {
-    let CesiumScript = document.createElement("script");
+    const CesiumScript = document.createElement("script");
     CesiumScript.src =
       "https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js";
     CesiumScript.async = true;
@@ -162,22 +170,32 @@ const InteractiveMap = () => {
     document.body.appendChild(CesiumScript);
 
     return () => {
-      clearInterval(timerRef.current);
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+      }
       if (viewerRef.current) {
         viewerRef.current.destroy();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    clearInterval(timerRef.current);
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+    }
     timerRef.current = setInterval(() => {
       setTimeInLocation((t) => t + 1);
       if (timeInLocation % 3 === 0) {
         updateLungHealth();
       }
     }, 1000);
-    return () => clearInterval(timerRef.current);
+    return () => {
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aqi, timeInLocation]);
 
   const resetLocationTimer = () => {
@@ -193,6 +211,8 @@ const InteractiveMap = () => {
 
   const initCesium = async () => {
     const Cesium = window.Cesium;
+    if (!cesiumContainer.current) return;
+
     const viewer = new Cesium.Viewer(cesiumContainer.current, {
       baseLayerPicker: false,
       geocoder: false,
@@ -229,7 +249,7 @@ const InteractiveMap = () => {
     updateAQIData(lon, lat);
   };
 
-  const createCharacterEntity = (lon, lat) => {
+  const createCharacterEntity = (lon: number, lat: number) => {
     const Cesium = window.Cesium;
     const viewer = viewerRef.current;
     if (!viewer) return;
@@ -265,7 +285,6 @@ const InteractiveMap = () => {
   useEffect(() => {
     if (!isMounted) return;
 
-    const Cesium = window.Cesium;
     const viewer = viewerRef.current;
 
     if (characterEntityRef.current && viewer && characterEntityRef.current.model) {
@@ -278,11 +297,13 @@ const InteractiveMap = () => {
       const modelPath = getAvatarModelPath(aqi);
       avatarModelViewerRef.current.setAttribute('src', modelPath);
 
-      if (aqi > 150) {
+      const numericAqi = aqi ?? 0;
+
+      if (numericAqi > 150) {
         avatarModelViewerRef.current.style.filter = 'saturate(1.2) brightness(0.9)';
-      } else if (aqi > 100) {
+      } else if (numericAqi > 100) {
         avatarModelViewerRef.current.style.filter = 'saturate(1.1) brightness(0.95)';
-      } else if (aqi > 50) {
+      } else if (numericAqi > 50) {
         avatarModelViewerRef.current.style.filter = 'saturate(1.05)';
       } else {
         avatarModelViewerRef.current.style.filter = 'brightness(1)';
@@ -298,7 +319,8 @@ const InteractiveMap = () => {
 
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
-    handler.setInputAction(function (movement) {
+    handler.setInputAction(function (movementEvent) {
+      const movement = movementEvent as { endPosition: unknown };
       const cartesian = viewer.camera.pickEllipsoid(
         movement.endPosition,
         viewer.scene.globe.ellipsoid
@@ -313,7 +335,8 @@ const InteractiveMap = () => {
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    handler.setInputAction(function (click) {
+    handler.setInputAction(function (clickEvent) {
+      const click = clickEvent as { position: unknown };
       if (isDragging) return;
 
       const cartesian = viewer.camera.pickEllipsoid(
@@ -333,12 +356,14 @@ const InteractiveMap = () => {
     const cesiumContainerDiv = cesiumContainer.current;
     if (!cesiumContainerDiv) return;
 
-    cesiumContainerDiv.addEventListener('dragover', (e) => {
+    cesiumContainerDiv.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+      }
     });
 
-    cesiumContainerDiv.addEventListener('drop', (e) => {
+    cesiumContainerDiv.addEventListener('drop', (e: DragEvent) => {
       e.preventDefault();
 
       const rect = cesiumContainerDiv.getBoundingClientRect();
@@ -366,7 +391,7 @@ const InteractiveMap = () => {
     });
   };
 
-  const moveCharacterTo = (newLon, newLat) => {
+  const moveCharacterTo = (newLon: number, newLat: number) => {
     const Cesium = window.Cesium;
     if (!characterEntityRef.current) return;
 
@@ -383,10 +408,10 @@ const InteractiveMap = () => {
     createParticleAnimation();
   };
 
-  const updateAQIData = async (lon, lat) => {
+  const updateAQIData = async (lon: number, lat: number) => {
     try {
       const selectedLocation = { lat, lng: lon };
-      const airQuality = await getAirQualityData(selectedLocation);
+      const airQuality = (await getAirQualityData(selectedLocation)) as AirQualityResponse;
       const aqiValue = airQuality?.values?.us_aqi;
 
       if (aqiValue === null || aqiValue === undefined) {
@@ -400,15 +425,16 @@ const InteractiveMap = () => {
       }
 
       setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error de red al consultar el AQI';
       setAqi(null);
       setAqiSource('unavailable');
-      setAqiStatusMessage(error?.message || 'Error de red al consultar el AQI');
+      setAqiStatusMessage(message);
       setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
     }
   };
 
-  const parseInputNumber = (value) => {
+  const parseInputNumber = (value: string | number | null | undefined): number => {
     if (value === null || value === undefined || value === '') {
       return NaN;
     }
@@ -475,7 +501,7 @@ const InteractiveMap = () => {
   };
 
   useEffect(() => {
-    const handleKey = (e) => {
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Enter") flyToLocation();
       if (e.key === "Escape") {
         if (viewerRef.current) {
@@ -495,15 +521,16 @@ const InteractiveMap = () => {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAvatarDragStart = (e) => {
+  const handleAvatarDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     setIsDragging(true);
     e.currentTarget.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleAvatarDragEnd = (e) => {
+  const handleAvatarDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     e.currentTarget.classList.remove('dragging');
     setTimeout(() => setIsDragging(false), 100);
   };

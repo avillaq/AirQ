@@ -36,18 +36,24 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : undefined;
+    const errorMessage =
+      typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message)
+        : undefined;
+
     if (error instanceof ApiValidationError) {
       return NextResponse.json({ status: 'error', message: error.message }, { status: error.statusCode });
     }
 
-    if (error?.code === '23505') {
+    if (errorCode === '23505') {
       return NextResponse.json({ status: 'error', message: 'Este correo ya está suscrito' }, { status: 409 });
     }
 
     if (
-      typeof error?.message === 'string' &&
-      (error.message.includes('Missing DATABASE_URL') || error.message.includes('Missing SUBSCRIPTIONS_DATABASE_URL'))
+      typeof errorMessage === 'string' &&
+      (errorMessage.includes('Missing DATABASE_URL') || errorMessage.includes('Missing SUBSCRIPTIONS_DATABASE_URL'))
     ) {
       return NextResponse.json(
         { status: 'error', message: 'El servicio de suscripciones no está configurado en el servidor' },
@@ -55,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(error?.code)) {
+    if (errorCode && ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(errorCode)) {
       return NextResponse.json({ status: 'error', message: 'La base de datos de suscripciones no está disponible en este momento' }, { status: 503 });
     }
 

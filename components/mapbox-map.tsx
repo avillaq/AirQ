@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAirQualityData, getWeatherData } from '../api';
 import MapView from "./mapbox-map/MapView"
+import type {
+  AirQualityApiResponse,
+  AirQualityViewData,
+  DataSourceStatus,
+  SelectedLocation,
+  WeatherApiResponse,
+} from '@/types/air-quality';
 
 const ACTIVE_LOCATION_REFRESH_MS = 30 * 60 * 1000;
 
@@ -12,10 +19,10 @@ function toLocationCacheKey(lat: number, lng: number) {
 
 export function MapBox() {
 
-  const [airQualityData, setAirQualityData] = useState<any>(null);
-  const [dataSourceStatus, setDataSourceStatus] = useState<'real' | 'mock' | 'unavailable'>('unavailable');
+  const [airQualityData, setAirQualityData] = useState<AirQualityViewData | null>(null);
+  const [dataSourceStatus, setDataSourceStatus] = useState<DataSourceStatus>('unavailable');
   const [dataStatusMessage, setDataStatusMessage] = useState('Cargando datos en vivo...');
-  const [selectedLocation, setSelectedLocation] = useState({
+  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation>({
     lat: -12.0464,
     lng: -77.0428,
     name: 'Lima, Peru'
@@ -23,12 +30,12 @@ export function MapBox() {
 
   const detailsCacheRef = useRef<Map<string, {
     expiresAt: number;
-    airQualityData: any;
-    dataSourceStatus: 'real' | 'mock' | 'unavailable';
+    airQualityData: AirQualityViewData;
+    dataSourceStatus: DataSourceStatus;
     dataStatusMessage: string;
   }>>(new Map());
 
-  const handleLocationSelect = useCallback((location?: { lat: number; lng: number; name: string }) => {
+  const handleLocationSelect = useCallback((location?: SelectedLocation) => {
     if (!location) return;
 
     setSelectedLocation((previous) => {
@@ -59,10 +66,10 @@ export function MapBox() {
       }
 
       try {
-        const [airQuality, weather] = await Promise.all([
+        const [airQuality, weather] = (await Promise.all([
           getAirQualityData(selectedLocation),
           getWeatherData(selectedLocation)
-        ]);
+        ])) as [AirQualityApiResponse, WeatherApiResponse];
 
         const valuesAir = airQuality?.values || {};
         const valuesWeather = weather?.values || {};
@@ -84,18 +91,18 @@ export function MapBox() {
         ].every((value) => value !== null && value !== undefined);
 
         if (hasFullAir && hasFullWeather) {
-          const data: any = {
-            aqi: valuesAir.us_aqi,
-            pm25: valuesAir.pm2_5,
-            pm10: valuesAir.pm10,
-            no2: valuesAir.no2,
-            o3: valuesAir.o3,
-            co: valuesAir.co,
-            timestamp: valuesAir.timestamp,
+          const data: AirQualityViewData = {
+            aqi: valuesAir.us_aqi ?? null,
+            pm25: valuesAir.pm2_5 ?? null,
+            pm10: valuesAir.pm10 ?? null,
+            no2: valuesAir.no2 ?? null,
+            o3: valuesAir.o3 ?? null,
+            co: valuesAir.co ?? null,
+            timestamp: valuesAir.timestamp ?? null,
             weather: {
-              temperature: valuesWeather.temperature,
-              humidity: valuesWeather.humidity,
-              windSpeed: valuesWeather.windspeed,
+              temperature: valuesWeather.temperature ?? null,
+              humidity: valuesWeather.humidity ?? null,
+              windSpeed: valuesWeather.windspeed ?? null,
             }
           };
 
@@ -112,7 +119,7 @@ export function MapBox() {
           return;
         }
 
-        const unavailableData = {
+        const unavailableData: AirQualityViewData = {
           aqi: null,
           pm25: null,
           pm10: null,
@@ -137,8 +144,8 @@ export function MapBox() {
           dataSourceStatus: 'unavailable',
           dataStatusMessage: 'Los datos en vivo están incompletos para esta ubicación en este momento',
         });
-      } catch (error: any) {
-        const fallbackData = {
+      } catch (error: unknown) {
+        const fallbackData: AirQualityViewData = {
           aqi: null,
           pm25: null,
           pm10: null,
@@ -155,7 +162,8 @@ export function MapBox() {
 
         setAirQualityData(fallbackData);
         setDataSourceStatus('unavailable');
-        setDataStatusMessage(error?.message || 'No se pudieron obtener datos en vivo');
+        const message = error instanceof Error ? error.message : 'No se pudieron obtener datos en vivo';
+        setDataStatusMessage(message);
       }
     };
 

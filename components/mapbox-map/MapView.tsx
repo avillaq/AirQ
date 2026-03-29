@@ -6,6 +6,16 @@ import { AlertTriangle, Droplets, Frown, LocateFixed, MapPin, Meh, MinusCircle, 
 import './MapView.css';
 import { getAirQualityPoints, searchCities } from '../../api';
 import { US_AQI_MAPBOX_COLOR_EXPRESSION, getUsAqiCategory } from '@/lib/aqi';
+import type {
+  AirQualityPointsResult,
+  CitySuggestion,
+  LngLatTuple,
+  MapViewProps,
+  MetricsProps,
+  SearchCitiesResult,
+} from '@/types/mapbox-map';
+
+const AQI_COLOR_EXPRESSION = US_AQI_MAPBOX_COLOR_EXPRESSION as unknown as mapboxgl.ExpressionSpecification;
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 if (!token) console.error('Falta NEXT_PUBLIC_MAPBOX_TOKEN');
@@ -15,7 +25,7 @@ const SELECTED_LOCATION_SOURCE_ID = 'selected-location';
 const SELECTED_LOCATION_HALO_LAYER_ID = 'selected-location-halo';
 const SELECTED_LOCATION_CORE_LAYER_ID = 'selected-location-core';
 
-function buildSelectedLocationGeoJson(center, locationName, aqi) {
+function buildSelectedLocationGeoJson(center: LngLatTuple, locationName: string, aqi: number | null): GeoJSON.FeatureCollection {
   return {
     type: 'FeatureCollection',
     features: [
@@ -44,25 +54,25 @@ export default function MapView({
   dataSourceStatus = 'unavailable',
   dataStatusMessage = '',
   onLocationSelect = () => {}
-}) {
-  const containerRef = useRef(null);
-  const mapRef = useRef(null);
-  const [error, setError] = useState(null);
-  const [locationError, setLocationError] = useState(null);
-  const intervalRef = useRef(null);
-  const citySearchCacheRef = useRef(new Map());
+}: MapViewProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const citySearchCacheRef = useRef<Map<string, CitySuggestion[]>>(new Map());
   const pendingCenterRef = useRef(center);
   const [isLocating, setIsLocating] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState(locationName);
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     setSearchQuery(locationName);
   }, [locationName]);
 
-  const resolveLocationName = useCallback(async (lat, lng) => {
+  const resolveLocationName = useCallback(async (lat: number, lng: number) => {
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place,country&language=es&access_token=${mapboxgl.accessToken}`
@@ -72,11 +82,11 @@ export default function MapView({
         return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
       }
 
-      const payload = await response.json();
+      const payload = (await response.json()) as { features?: Array<{ place_type?: string[]; text?: string }> };
       const features = payload?.features || [];
 
-      const place = features.find((feature) => feature.place_type?.includes('place'));
-      const country = features.find((feature) => feature.place_type?.includes('country'));
+      const place = features.find((feature: { place_type?: string[] }) => feature.place_type?.includes('place'));
+      const country = features.find((feature: { place_type?: string[] }) => feature.place_type?.includes('country'));
 
       if (place?.text && country?.text) {
         return `${place.text}, ${country.text}`;
@@ -147,7 +157,7 @@ export default function MapView({
         }
 
         try {
-          const result = await searchCities(query, 10);
+          const result = (await searchCities(query, 10)) as SearchCitiesResult;
           const nextSuggestions = result.cities || [];
           citySearchCacheRef.current.set(normalizedQuery, nextSuggestions);
           setSuggestions(nextSuggestions);
@@ -169,12 +179,12 @@ export default function MapView({
   const loadData = useCallback(async () => {
     if (!mapRef.current) return;
 
-    const result = await getAirQualityPoints();
+    const result = (await getAirQualityPoints()) as AirQualityPointsResult;
     const src = mapRef.current.getSource('air-points');
 
-    if (!src) return;
+    if (!src || !('setData' in src)) return;
 
-    src.setData(result.geojson);
+    (src as mapboxgl.GeoJSONSource).setData(result.geojson);
 
     if (result.source === 'real') {
       setError(null);
@@ -188,6 +198,7 @@ export default function MapView({
   useEffect(() => {
     if (!token) return;
     if (mapRef.current) return;
+    if (!containerRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
       container: containerRef.current,
@@ -201,6 +212,7 @@ export default function MapView({
     });
 
     const map = mapRef.current;
+    if (!map) return;
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'top-right');
     
     map.dragRotate.disable();
@@ -229,7 +241,7 @@ export default function MapView({
           ],
           'circle-stroke-width': 1,
           'circle-stroke-color': '#111',
-          'circle-color': US_AQI_MAPBOX_COLOR_EXPRESSION
+          'circle-color': AQI_COLOR_EXPRESSION
         }
       });
 
@@ -250,7 +262,7 @@ export default function MapView({
         source: SELECTED_LOCATION_SOURCE_ID,
         paint: {
           'circle-radius': 6,
-          'circle-color': US_AQI_MAPBOX_COLOR_EXPRESSION,
+          'circle-color': AQI_COLOR_EXPRESSION,
           'circle-stroke-color': '#0f1211',
           'circle-stroke-width': 2,
         },
@@ -264,14 +276,16 @@ export default function MapView({
         map.getCanvas().style.cursor = '';
       });
 
-      map.on('click', 'air-circles', (e) => {
+      map.on('click', 'air-circles', (e: mapboxgl.MapLayerMouseEvent) => {
         const f = e.features?.[0];
         if (!f) return;
-        const coordinates = f.geometry?.coordinates;
-        if (!Array.isArray(coordinates) || coordinates.length < 2) return;
+        if (f.geometry?.type !== 'Point') return;
+
+        const coordinates = f.geometry.coordinates as [number, number];
 
         const [lng, lat] = coordinates;
-        const nextName = f.properties?.name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+        const properties = (f.properties || {}) as Record<string, unknown>;
+        const nextName = typeof properties.name === 'string' ? properties.name : `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
         setSearchQuery(nextName);
         setShowSuggestions(false);
         onLocationSelect({ lat, lng, name: nextName });
@@ -297,6 +311,7 @@ export default function MapView({
       map.remove();
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshMs, token, loadData]);
 
   useEffect(() => {
@@ -311,8 +326,8 @@ export default function MapView({
     );
 
     const selectedLocationSource = mapRef.current.getSource(SELECTED_LOCATION_SOURCE_ID);
-    if (selectedLocationSource) {
-      selectedLocationSource.setData(
+    if (selectedLocationSource && 'setData' in selectedLocationSource) {
+      (selectedLocationSource as mapboxgl.GeoJSONSource).setData(
         buildSelectedLocationGeoJson(next, locationName, airQualityData?.aqi ?? null)
       );
     }
@@ -409,8 +424,8 @@ export default function MapView({
   );
 }
 
-function Metrics({ data, locationName, sourceStatus, sourceMessage }) {
-  const getAQIStatus = (aqi) => {
+function Metrics({ data, locationName, sourceStatus, sourceMessage }: MetricsProps) {
+  const getAQIStatus = (aqi: number | null) => {
     const category = getUsAqiCategory(aqi);
 
     if (category.key === 'unavailable') {
