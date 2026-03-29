@@ -242,7 +242,6 @@ export function HeroSection() {
       }
     }
 
-    // Raycaster
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2(-10, -10)
 

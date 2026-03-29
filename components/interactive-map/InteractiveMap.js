@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getAirQualityData } from '../../api';
 import Link from 'next/link';
+import { getUsAqiCategory } from '@/lib/aqi';
 import "./InteractiveMap.css";
 
 const CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN;
@@ -16,10 +17,8 @@ const AVATAR_STATES = {
 
 function getAvatarModelPath(aqi) {
   if (aqi === null || aqi === undefined) return "/models/avatar_coughing.glb";
-  if (aqi <= 25) return "/models/avatar_greeting.glb";
-  if (aqi <= 50) return "/models/avatar_greeting.glb";
-  if (aqi <= 100) return "/models/avatar_coughing.glb";
-  if (aqi <= 150) return "/models/avatar_coughing.glb";
+  if (aqi <= 100) return "/models/avatar_greeting.glb";
+  if (aqi <= 200) return "/models/avatar_coughing.glb";
   return "/models/avatar_coughing.glb";
 }
 
@@ -31,27 +30,23 @@ function getLungModelPath(lungHealth) {
 }
 
 function getAQIClass(aqi) {
-  if (aqi === null || aqi === undefined) return "aqi-unavailable";
-  if (aqi <= 50) return "aqi-good";
-  if (aqi <= 100) return "aqi-moderate";
-  if (aqi <= 150) return "aqi-unhealthy";
-  return "aqi-hazardous";
+  return getUsAqiCategory(aqi).className;
 }
 
 function getAQIText(aqi) {
-  if (aqi === null || aqi === undefined) return "No disponible";
-  if (aqi <= 50) return "Bueno";
-  if (aqi <= 100) return "Moderado";
-  if (aqi <= 150) return "Dañino";
-  return "Peligroso";
+  return getUsAqiCategory(aqi).labelEs;
 }
 
 function getAvatarState(aqi) {
-  if (aqi === null || aqi === undefined) return { src: AVATAR_STATES.moderate, mood: "Sin datos" };
-  if (aqi <= 50) return { src: AVATAR_STATES.good, mood: "Saludable" };
-  if (aqi <= 100) return { src: AVATAR_STATES.moderate, mood: "Molestia leve" };
-  if (aqi <= 150) return { src: AVATAR_STATES.unhealthy, mood: "Afectado" };
-  return { src: AVATAR_STATES.critical, mood: "Crítico" };
+  const category = getUsAqiCategory(aqi).key;
+
+  if (category === 'unavailable') return { src: AVATAR_STATES.moderate, mood: "Sin datos" };
+  if (category === 'good') return { src: AVATAR_STATES.good, mood: "Saludable" };
+  if (category === 'moderate') return { src: AVATAR_STATES.moderate, mood: "Molestia leve" };
+  if (category === 'unhealthy-sensitive') return { src: AVATAR_STATES.moderate, mood: "Sensible" };
+  if (category === 'unhealthy') return { src: AVATAR_STATES.unhealthy, mood: "Afectado" };
+  if (category === 'very-unhealthy') return { src: AVATAR_STATES.critical, mood: "Muy afectado" };
+  return { src: AVATAR_STATES.critical, mood: "Critico" };
 }
 
 const InteractiveMap = () => {
@@ -190,7 +185,6 @@ const InteractiveMap = () => {
     setLungHealth((h) => Math.min(100, h + 2));
   };
 
-  // if there is high aqi, lung health degrades faster
   const updateLungHealth = () => {
     if (aqi === null || aqi === undefined) return;
     const degradationRate = aqi > 100 ? 0.8 : 0.1;

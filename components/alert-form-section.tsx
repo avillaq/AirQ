@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { subscribeToAlerts } from "@/api"
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
+import { ALERT_POLICY_LINES } from "@/lib/aqi"
 
 import "./interactive-map/InteractiveMap.css";
 
@@ -330,13 +331,9 @@ export function AlertFormSection() {
                   <strong>Alerta personalizada:</strong> Según tu edad, recibirás notificaciones cuando el AQI supere tu umbral personalizado:
                   <br />
                   <span className="text-xs mt-2 block">
-                    • Niños (0-12): AQI &gt; 50
-                    <br />
-                    • Adolescentes (13-18): AQI &gt; 75
-                    <br />
-                    • Adultos (19-64): AQI &gt; 100
-                    <br />
-                    • Adultos mayores (65+): AQI &gt; 50
+                    {ALERT_POLICY_LINES.map((line) => (
+                      <span key={line} className="block">• {line}</span>
+                    ))}
                   </span>
                 </p>
               </div>

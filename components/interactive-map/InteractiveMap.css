@@ -306,8 +306,16 @@
     background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
+.aqi-sensitive {
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+}
+
 .aqi-unhealthy {
     background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.aqi-very-unhealthy {
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
 }
 
 .aqi-hazardous {

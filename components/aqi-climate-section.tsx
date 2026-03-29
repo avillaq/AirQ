@@ -59,7 +59,6 @@ export function AQIClimateSection() {
       <div className="w-[400px] h-[400px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary/5 blur-[120px] z-0" />
       
       <div className="relative z-10 w-full max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="flex flex-col justify-start items-center gap-4 text-center mb-16">
           <h2 className="text-foreground text-4xl md:text-5xl lg:text-[56px] font-semibold leading-tight md:leading-tight lg:leading-[64px] break-words max-w-4xl">
             Compuestos del aire y su impacto
@@ -69,7 +68,6 @@ export function AQIClimateSection() {
           </p>
         </div>
 
-        {/* Compounds Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {compounds.map((compound, index) => (
             <div
@@ -77,13 +75,11 @@ export function AQIClimateSection() {
               className={`relative overflow-hidden rounded-xl border backdrop-blur-md transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br ${compound.color} ${compound.borderColor} shadow-xl bg-card/60`}
             >
               <div className="p-6 flex flex-col gap-4">
-                {/* Header */}
                 <div className="flex items-center gap-3">
                   <compound.icon className="h-8 w-8 text-primary" />
                   <h3 className="text-xl font-semibold text-foreground">{compound.name}</h3>
                 </div>
 
-                {/* Description */}
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm font-medium text-foreground leading-relaxed">
@@ -91,7 +87,6 @@ export function AQIClimateSection() {
                     </p>
                   </div>
 
-                  {/* Effects */}
                   <div className="pt-3 border-t border-border">
                     <div className="flex items-start gap-2">
                       <Activity className="h-4 w-4 text-primary mt-1 flex-shrink-0" />

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbPool } from '@/lib/server-db';
+import { getAlertSensitivityGroup, getAlertThresholdByAge } from '@/lib/aqi';
 import {
   ApiValidationError,
   parseLatLngFromLocation,
@@ -7,20 +8,6 @@ import {
   toInteger,
   toString,
 } from '@/lib/server-validation';
-
-function calculateThreshold(age: number): number {
-  if (age < 13) return 50;
-  if (age < 19) return 75;
-  if (age < 65) return 100;
-  return 50;
-}
-
-function getSensitivityGroup(age: number): string {
-  if (age < 13) return 'Niños (alta sensibilidad)';
-  if (age < 19) return 'Adolescentes (sensibilidad moderada)';
-  if (age < 65) return 'Adultos (sensibilidad normal)';
-  return 'Adultos mayores (alta sensibilidad)';
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +18,7 @@ export async function POST(request: NextRequest) {
     const email = toEmail(body?.email);
     const age = toInteger(body?.age, 'age', 1, 120);
     const { lat, lng } = parseLatLngFromLocation(body?.location);
-    const threshold = calculateThreshold(age);
+    const threshold = getAlertThresholdByAge(age);
 
     const pool = getDbPool();
     await pool.query(
@@ -45,7 +32,7 @@ export async function POST(request: NextRequest) {
         status: 'ok',
         message: 'Suscripción creada correctamente',
         threshold,
-        sensitivity_group: getSensitivityGroup(age),
+        sensitivity_group: getAlertSensitivityGroup(age),
       },
       { status: 201 }
     );

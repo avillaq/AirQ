@@ -2,50 +2,160 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { AlertTriangle, Droplets, Frown, Info, MapPin, Meh, MinusCircle, Skull, Smile, Thermometer, Wind } from 'lucide-react';
+import { AlertTriangle, Droplets, Frown, LocateFixed, MapPin, Meh, MinusCircle, Search, Skull, Smile, Thermometer, Wind } from 'lucide-react';
 import './MapView.css';
-import { getAirQualityPoints, getHistoricalMerra2Data, searchCities } from '../../api';
+import { getAirQualityPoints, searchCities } from '../../api';
+import { US_AQI_MAPBOX_COLOR_EXPRESSION, getUsAqiCategory } from '@/lib/aqi';
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 if (!token) console.error('Falta NEXT_PUBLIC_MAPBOX_TOKEN');
 mapboxgl.accessToken = token || '';
 
+const SELECTED_LOCATION_SOURCE_ID = 'selected-location';
+const SELECTED_LOCATION_HALO_LAYER_ID = 'selected-location-halo';
+const SELECTED_LOCATION_CORE_LAYER_ID = 'selected-location-core';
+
+function buildSelectedLocationGeoJson(center, locationName, aqi) {
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: center,
+        },
+        properties: {
+          name: locationName,
+          aqi,
+        },
+      },
+    ],
+  };
+}
+
 export default function MapView({
   center = [-74.08175, 4.60971],
   zoom = 3.2,
-  refreshMs = 60000,
+  refreshMs = 1800000,
   allowRecenter = true,
   airQualityData = null,
   locationName = 'Ubicacion desconocida',
   dataSourceStatus = 'unavailable',
-  dataStatusMessage = ''
+  dataStatusMessage = '',
+  onLocationSelect = () => {}
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const [error, setError] = useState(null);
+  const [locationError, setLocationError] = useState(null);
   const intervalRef = useRef(null);
-  const userInteractedRef = useRef(false);
+  const citySearchCacheRef = useRef(new Map());
   const pendingCenterRef = useRef(center);
+  const [isLocating, setIsLocating] = useState(false);
 
-  const [showHistoricalSearch, setShowHistoricalSearch] = useState(false);
-  const [historicalData, setHistoricalData] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(locationName);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [searchDate, setSearchDate] = useState('');
-  const [searchHour, setSearchHour] = useState('12');
+
+  useEffect(() => {
+    setSearchQuery(locationName);
+  }, [locationName]);
+
+  const resolveLocationName = useCallback(async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place,country&language=es&access_token=${mapboxgl.accessToken}`
+      );
+
+      if (!response.ok) {
+        return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+      }
+
+      const payload = await response.json();
+      const features = payload?.features || [];
+
+      const place = features.find((feature) => feature.place_type?.includes('place'));
+      const country = features.find((feature) => feature.place_type?.includes('country'));
+
+      if (place?.text && country?.text) {
+        return `${place.text}, ${country.text}`;
+      }
+
+      if (country?.text) {
+        return country.text;
+      }
+
+      return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    } catch {
+      return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    }
+  }, []);
+
+  const requestUserLocation = useCallback((showDenyError = true) => {
+    if (!navigator.geolocation) {
+      if (showDenyError) {
+        setLocationError('Tu navegador no soporta geolocalizacion.');
+      }
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = Number(position.coords.latitude.toFixed(4));
+        const lng = Number(position.coords.longitude.toFixed(4));
+        const resolvedName = await resolveLocationName(lat, lng);
+
+        onLocationSelect({ lat, lng, name: resolvedName });
+        setSearchQuery(resolvedName);
+        setShowSuggestions(false);
+        setIsLocating(false);
+      },
+      () => {
+        if (showDenyError) {
+          setLocationError('No se pudo obtener tu ubicacion. Puedes buscar manualmente.');
+        }
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  }, [onLocationSelect, resolveLocationName]);
 
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
-      if (searchQuery.length > 1) {
+      const query = searchQuery.trim();
+      if (query.length > 1) {
+        const normalizedQuery = query.toLowerCase();
+        if (normalizedQuery === locationName.toLowerCase()) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+          return;
+        }
+
+        const cachedSuggestions = citySearchCacheRef.current.get(normalizedQuery);
+        if (cachedSuggestions) {
+          setSuggestions(cachedSuggestions);
+          setShowSuggestions(cachedSuggestions.length > 0);
+          return;
+        }
+
         try {
-          const result = await searchCities(searchQuery, 10);
-          setSuggestions(result.cities || []);
-          setShowSuggestions(true);
+          const result = await searchCities(query, 10);
+          const nextSuggestions = result.cities || [];
+          citySearchCacheRef.current.set(normalizedQuery, nextSuggestions);
+          setSuggestions(nextSuggestions);
+          setShowSuggestions(nextSuggestions.length > 0);
         } catch (err) {
           console.error('Error al buscar ciudades:', err);
           setSuggestions([]);
+          setShowSuggestions(false);
         }
       } else {
         setSuggestions([]);
@@ -54,38 +164,7 @@ export default function MapView({
     }, 300);
 
     return () => clearTimeout(searchTimeout);
-  }, [searchQuery]);
-
-  const handleHistoricalSearch = async () => {
-    if (!selectedLocation || !searchDate) {
-      setError('Selecciona una ubicacion y una fecha');
-      return;
-    }
-
-    try {
-      setError(null);
-      const result = await getHistoricalMerra2Data({
-        lat: selectedLocation.lat,
-        lng: selectedLocation.lng,
-        date: searchDate,
-        hour: parseInt(searchHour)
-      });
-
-      setHistoricalData(result);
-      
-      if (mapRef.current) {
-        mapRef.current.flyTo({
-          center: [selectedLocation.lng, selectedLocation.lat],
-          zoom: 8,
-          duration: 2000
-        });
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'No se pudieron obtener los datos historicos');
-      console.error('Error de datos historicos:', err);
-    }
-  };
-
+  }, [searchQuery, locationName]);
 
   const loadData = useCallback(async () => {
     if (!mapRef.current) return;
@@ -106,29 +185,6 @@ export default function MapView({
     }
   }, []);
 
-const resetMap = useCallback(() => {
-  if (!mapRef.current) return;
-  
-  console.log('Reseteando mapa...');
-  
-  mapRef.current.flyTo({
-    center: [-74.08175, 4.60971], 
-    zoom: 2.5, 
-    duration: 2000
-  });
-  
-  userInteractedRef.current = false;
-  
-  setHistoricalData(null);
-  setShowHistoricalSearch(false);
-  
-  setTimeout(() => {
-    loadData();
-  }, 500); 
-  
-  console.log('Mapa reseteado');
-}, [loadData]);
-
   useEffect(() => {
     if (!token) return;
     if (mapRef.current) return;
@@ -145,23 +201,20 @@ const resetMap = useCallback(() => {
     });
 
     const map = mapRef.current;
-    
-
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'top-right');
     
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
 
-    ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => {
-      map.on(ev, () => {
-        userInteractedRef.current = true;
-      });
-    });
-
     map.on('load', () => {
       map.addSource('air-points', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
+      });
+
+      map.addSource(SELECTED_LOCATION_SOURCE_ID, {
+        type: 'geojson',
+        data: buildSelectedLocationGeoJson(center, locationName, airQualityData?.aqi ?? null),
       });
 
       map.addLayer({
@@ -176,99 +229,76 @@ const resetMap = useCallback(() => {
           ],
           'circle-stroke-width': 1,
           'circle-stroke-color': '#111',
-          'circle-color': [
-            'step',
-            ['get', 'aqi'],
-            '#2ecc71', // Good: 0-50
-            51, '#f1c40f', // Moderate: 51-100
-            101, '#e67e22', // Unhealthy for sensitive: 101-150
-            151, '#e74c3c', // Unhealthy: 151-200
-            201, '#8e44ad', // Very unhealthy: 201-300
-            301, '#6e2c00' // Hazardous: 301+
-          ]
+          'circle-color': US_AQI_MAPBOX_COLOR_EXPRESSION
         }
       });
 
-      // Add popup on hover
-      const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+      map.addLayer({
+        id: SELECTED_LOCATION_HALO_LAYER_ID,
+        type: 'circle',
+        source: SELECTED_LOCATION_SOURCE_ID,
+        paint: {
+          'circle-radius': 12,
+          'circle-color': 'rgba(120, 252, 214, 0.22)',
+          'circle-stroke-width': 0,
+        },
+      });
 
-      map.on('mousemove', 'air-circles', (e) => {
-        const f = e.features?.[0];
-        if (!f) return;
+      map.addLayer({
+        id: SELECTED_LOCATION_CORE_LAYER_ID,
+        type: 'circle',
+        source: SELECTED_LOCATION_SOURCE_ID,
+        paint: {
+          'circle-radius': 6,
+          'circle-color': US_AQI_MAPBOX_COLOR_EXPRESSION,
+          'circle-stroke-color': '#0f1211',
+          'circle-stroke-width': 2,
+        },
+      });
+
+      map.on('mouseenter', 'air-circles', () => {
         map.getCanvas().style.cursor = 'pointer';
-        
-        const aqi = f.properties.aqi;
-        const pm25 = f.properties.pm25 || 'N/A';
-        const lastUpdate = f.properties.lastUpdate || 'Unknown';
-        
-        // Determinar color según AQI
-        let aqiColor = '#2ecc71';
-        let aqiStatus = 'Bueno';
-        
-        if (aqi > 300) {
-          aqiColor = '#6e2c00';
-          aqiStatus = 'Peligroso';
-        } else if (aqi > 200) {
-          aqiColor = '#8e44ad';
-          aqiStatus = 'Muy dañino';
-        } else if (aqi > 150) {
-          aqiColor = '#e74c3c';
-          aqiStatus = 'Dañino';
-        } else if (aqi > 100) {
-          aqiColor = '#e67e22';
-          aqiStatus = 'Dañino para sensibles';
-        } else if (aqi > 50) {
-          aqiColor = '#f1c40f';
-          aqiStatus = 'Moderado';
-        }
-        
-        popup
-          .setLngLat(f.geometry.coordinates)
-          .setHTML(`
-            <div style="font-size:13px; padding: 8px; min-width: 200px;">
-              <div style="font-weight:700; font-size:14px; margin-bottom: 8px; color: #333;">
-                ${f.properties.name || 'Ubicación'}
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-                <div>
-                  <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">AQI</div>
-                  <div style="font-size: 24px; font-weight: 800; color: ${aqiColor};">${aqi}</div>
-                </div>
-                <div style="flex: 1;">
-                  <div style="font-size: 12px; font-weight: 600; color: ${aqiColor};">${aqiStatus}</div>
-                  <div style="font-size: 11px; color: #666;">PM2.5: ${pm25} µg/m³</div>
-                </div>
-              </div>
-              <div style="font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 6px; margin-top: 6px;">
-                ${lastUpdate.includes('Estimated') ? 'Datos estimados' : `Actualizado: ${lastUpdate}`}
-              </div>
-            </div>
-          `)
-          .addTo(map);
       });
+
       map.on('mouseleave', 'air-circles', () => {
         map.getCanvas().style.cursor = '';
-        popup.remove();
       });
 
-      // Initial data load
+      map.on('click', 'air-circles', (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const coordinates = f.geometry?.coordinates;
+        if (!Array.isArray(coordinates) || coordinates.length < 2) return;
+
+        const [lng, lat] = coordinates;
+        const nextName = f.properties?.name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+        setSearchQuery(nextName);
+        setShowSuggestions(false);
+        onLocationSelect({ lat, lng, name: nextName });
+      });
+
+      map.on('mouseenter', SELECTED_LOCATION_CORE_LAYER_ID, () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', SELECTED_LOCATION_CORE_LAYER_ID, () => {
+        map.getCanvas().style.cursor = '';
+      });
+
       loadData();
       
-      // Set up auto-refresh
       if (refreshMs && refreshMs > 0) {
         intervalRef.current = setInterval(loadData, refreshMs);
       }
     });
 
-    // Cleanup on unmount
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       map.remove();
       mapRef.current = null;
     };
-  }, [center, zoom, refreshMs, token, loadData]);
+  }, [refreshMs, token, loadData]);
 
-  // Handle center changes
   useEffect(() => {
     if (!mapRef.current) return;
     if (!allowRecenter) return;
@@ -280,12 +310,18 @@ const resetMap = useCallback(() => {
       Math.pow(prev[1] - next[1], 2)
     );
 
-    // Only recenter if user hasn't interacted and distance is significant
-    if (dist > 0.01 && !userInteractedRef.current) {
-      mapRef.current.easeTo({ center: next, duration: 6000 });
+    const selectedLocationSource = mapRef.current.getSource(SELECTED_LOCATION_SOURCE_ID);
+    if (selectedLocationSource) {
+      selectedLocationSource.setData(
+        buildSelectedLocationGeoJson(next, locationName, airQualityData?.aqi ?? null)
+      );
+    }
+
+    if (dist > 0.01) {
+      mapRef.current.easeTo({ center: next, zoom: 7, duration: 1800 });
       pendingCenterRef.current = next;
     }
-  }, [center, allowRecenter]);
+  }, [center, allowRecenter, locationName, airQualityData?.aqi]);
 
   if (!token) {
     return (
@@ -303,110 +339,59 @@ const resetMap = useCallback(() => {
 
   return (
     <div className="map-wrapper">
-      <button
-        type="button"
-        className="map-refresh-btn"
-        onClick={resetMap}
-        title="Actualizar datos"
-      >
-        Actualizar
-      </button>
-
-      {/* Botón para toggle búsqueda histórica */}
-      <button
-        type="button"
-        className="map-historical-btn"
-        onClick={() => setShowHistoricalSearch(!showHistoricalSearch)}
-        title="Busqueda de datos historicos"
-      >
-        {showHistoricalSearch ? 'Ocultar historico' : 'Mostrar historico'}
-      </button>
-
-      {/* Panel de búsqueda histórica */}
-      {showHistoricalSearch && (
-        <div className="historical-search-panel">
-          <h3 className="historical-title">Datos meteorologicos historicos (MERRA2)</h3>
-          
-          <div className="search-input-group">
-            <label>Ubicacion</label>
-            <input
-              type="text"
-              placeholder="Buscar ciudad..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="historical-input"
-            />
-            
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="city-suggestions">
-                {suggestions.map((city, idx) => (
-                  <div
-                    key={idx}
-                    className="suggestion-item"
-                    onClick={() => {
-                      setSelectedLocation(city);
-                      setSearchQuery(`${city.city}, ${city.country}`);
-                      setShowSuggestions(false);
-                    }}
-                  >
-                    <span className="city-name">{city.city}</span>
-                    <span className="country-name">{city.country}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="search-input-group">
-            <label>Fecha</label>
-            <input
-              type="date"
-              value={searchDate}
-              onChange={(e) => setSearchDate(e.target.value)}
-              min="1980-01-01"
-              max={new Date().toISOString().split('T')[0]}
-              className="historical-input"
-            />
-          </div>
-
-          <div className="search-input-group">
-            <label>Hora (0-23)</label>
-            <input
-              type="number"
-              min="0"
-              max="23"
-              value={searchHour}
-              onChange={(e) => setSearchHour(e.target.value)}
-              className="historical-input"
-            />
-          </div>
-
-          <button
-            onClick={handleHistoricalSearch}
-            className="historical-search-btn"
-            disabled={!selectedLocation || !searchDate}
-          >
-            Buscar datos historicos
-          </button>
+      <div className="live-search-panel">
+        <div className="live-search-row">
+          <Search size={14} />
+          <input
+            type="text"
+            placeholder="Buscar ciudad o pais..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            className="live-search-input"
+          />
         </div>
-      )}
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="city-suggestions">
+            {suggestions.map((city, idx) => (
+              <div
+                key={idx}
+                className="suggestion-item"
+                onClick={() => {
+                  const nextName = `${city.city}, ${city.country}`;
+                  setSearchQuery(nextName);
+                  setShowSuggestions(false);
+                  onLocationSelect({ lat: city.lat, lng: city.lng, name: nextName });
+                }}
+              >
+                <span className="city-name">{city.city}</span>
+                <span className="country-name">{city.country}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="map-locate-btn"
+          onClick={() => requestUserLocation(true)}
+          disabled={isLocating}
+        >
+          <LocateFixed size={14} />
+          {isLocating ? 'Ubicando...' : 'Usar mi ubicacion'}
+        </button>
+      </div>
 
       <div className="mapbox-container" ref={containerRef} />
-      
-      <Legend />
-      
-      {historicalData ? (
-        <HistoricalMetrics data={historicalData} />
-      ) : (
-        airQualityData && (
-          <CompactMetrics
-            data={airQualityData}
-            locationName={locationName}
-            sourceStatus={dataSourceStatus}
-            sourceMessage={dataStatusMessage}
-          />
-        )
+
+      {airQualityData && (
+        <Metrics
+          data={airQualityData}
+          locationName={locationName}
+          sourceStatus={dataSourceStatus}
+          sourceMessage={dataStatusMessage}
+        />
       )}
       
       {error && (
@@ -414,52 +399,36 @@ const resetMap = useCallback(() => {
           {error}
         </div>
       )}
-    </div>
-  );
-}
 
-// AQI Legend component
-function Legend() {
-  const items = [
-    { c: '#2ecc71', l: '0–50' },
-    { c: '#f1c40f', l: '51–100' },
-    { c: '#e67e22', l: '101–150' },
-    { c: '#e74c3c', l: '151–200' },
-    { c: '#8e44ad', l: '201–300' },
-    { c: '#6e2c00', l: '301+' }
-  ];
-  
-  return (
-    <div className="map-legend">
-    <div className="legend-title">Niveles de AQI</div>
-      {items.map(i => (
-        <div key={i.l} className="legend-row">
-          <span className="legend-color" style={{ background: i.c }} />
-          {i.l}
+      {locationError && (
+        <div className="map-location-error-badge">
+          {locationError}
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-// Compact metrics display component
-function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
-  // Determine AQI status and styling
+function Metrics({ data, locationName, sourceStatus, sourceMessage }) {
   const getAQIStatus = (aqi) => {
-    if (aqi === null || aqi === undefined) return { status: 'No disponible', color: '#9ca3af', icon: MinusCircle };
-    if (aqi <= 50) return { status: 'Bueno', color: '#00e676', icon: Smile };
-    if (aqi <= 100) return { status: 'Moderado', color: '#ffeb3b', icon: Meh };
-    if (aqi <= 150) return { status: 'Dañino', color: '#ff9800', icon: Frown };
-    if (aqi <= 200) return { status: 'Dañino', color: '#f44336', icon: AlertTriangle };
-    if (aqi <= 300) return { status: 'Muy dañino', color: '#9c27b0', icon: AlertTriangle };
-    return { status: 'Peligroso', color: '#8d6e63', icon: Skull };
+    const category = getUsAqiCategory(aqi);
+
+    if (category.key === 'unavailable') {
+      return { status: category.labelEs, color: category.colorHex, icon: MinusCircle };
+    }
+
+    if (category.key === 'good') return { status: category.labelEs, color: category.colorHex, icon: Smile };
+    if (category.key === 'moderate') return { status: category.labelEs, color: category.colorHex, icon: Meh };
+    if (category.key === 'unhealthy-sensitive') return { status: category.labelEs, color: category.colorHex, icon: Frown };
+    if (category.key === 'unhealthy') return { status: category.labelEs, color: category.colorHex, icon: AlertTriangle };
+    if (category.key === 'very-unhealthy') return { status: category.labelEs, color: category.colorHex, icon: AlertTriangle };
+    return { status: category.labelEs, color: category.colorHex, icon: Skull };
   };
 
   const aqiInfo = getAQIStatus(data.aqi);
 
   return (
     <div className="compact-metrics">
-      {/* Header with location and time */}
       <div className="compact-header">
         <div className="compact-location">
           <MapPin size={14} />
@@ -481,7 +450,6 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
         <div className="source-message">{sourceMessage}</div>
       ) : null}
 
-      {/* Main AQI display */}
       <div className="compact-aqi" style={{ borderLeftColor: aqiInfo.color }}>
         <div className="aqi-icon"><aqiInfo.icon size={20} /></div>
         <div className="aqi-content">
@@ -492,7 +460,6 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
         </div>
       </div>
 
-      {/* Pollutant metrics grid */}
       <div className="compact-grid">
         <div className="compact-metric">
           <span className="metric-label">PM2.5</span>
@@ -516,7 +483,6 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
         </div>
       </div>
 
-      {/* Weather information */}
       <div className="compact-weather">
         <div className="weather-compact">
           <Thermometer size={14} />
@@ -535,56 +501,3 @@ function CompactMetrics({ data, locationName, sourceStatus, sourceMessage }) {
   );
 }
 
-function HistoricalMetrics({ data }) {
-  // Convertir temperatura de Kelvin a Celsius
-  const tempCelsius = data.values.temperature_2m 
-    ? (data.values.temperature_2m - 273.15).toFixed(1)
-    : 'N/A';
-
-  // Calcular velocidad del viento desde componentes U y V
-  const windU = data.values.wind_u_10m || 0;
-  const windV = data.values.wind_v_10m || 0;
-  const windSpeed = Math.sqrt(windU ** 2 + windV ** 2).toFixed(1);
-
-  // Convertir humedad específica a relativa (aproximación)
-  const humidity = data.values.humidity_2m 
-    ? (data.values.humidity_2m * 100).toFixed(1)
-    : 'N/A';
-
-  return (
-    <div className="compact-metrics historical-metrics">
-      <div className="compact-header">
-        <div className="compact-location">
-          <Info size={14} />
-          <span className="location-text"> Datos historicos</span>
-        </div>
-        <div className="compact-time">
-          {data.datetime.date} a las {data.datetime.hour}:00
-        </div>
-      </div>
-
-      <div className="historical-location-info">
-        <strong>Ubicacion:</strong> {data.location.lat.toFixed(2)}°, {data.location.lng.toFixed(2)}°
-      </div>
-
-      <div className="compact-grid">
-        <div className="compact-metric">
-          <span className="metric-label">Temp (°C)</span>
-          <span className="metric-value-compact">{tempCelsius}</span>
-        </div>
-        <div className="compact-metric">
-          <span className="metric-label">Humedad</span>
-          <span className="metric-value-compact">{humidity}%</span>
-        </div>
-        <div className="compact-metric">
-          <span className="metric-label">Viento (m/s)</span>
-          <span className="metric-value-compact">{windSpeed}</span>
-        </div>
-      </div>
-
-      <div className="historical-note">
-        Datos de la reanalisis NASA MERRA-2
-      </div>
-    </div>
-  );
-}
