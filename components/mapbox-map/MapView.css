@@ -96,8 +96,9 @@
 
 .map-location-error-badge {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  bottom: 56px;
+  left: 16px;
+  right: auto;
   max-width: 340px;
   background: rgba(245, 158, 11, 0.15);
   color: #fcd34d;

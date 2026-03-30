@@ -102,10 +102,61 @@ export default function MapView({
     }
   }, []);
 
-  const requestUserLocation = useCallback((showDenyError = true) => {
+  const resolveApproximateLocationByIp = useCallback(async () => {
+    try {
+      const response = await fetch('/api/location/approx', { cache: 'no-store' });
+      if (!response.ok) return null;
+
+      const payload = (await response.json()) as {
+        lat?: number;
+        lng?: number;
+        name?: string;
+      };
+
+      if (!Number.isFinite(payload.lat) || !Number.isFinite(payload.lng)) {
+        return null;
+      }
+
+      const lat = Number((payload.lat as number).toFixed(4));
+      const lng = Number((payload.lng as number).toFixed(4));
+      const name = payload.name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+
+      return { lat, lng, name };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const requestUserLocation = useCallback(async (showDenyError = true) => {
+    const fallbackToApproximate = async (message: string) => {
+      const approximate = await resolveApproximateLocationByIp();
+      if (approximate) {
+        onLocationSelect({ lat: approximate.lat, lng: approximate.lng, name: approximate.name });
+        setSearchQuery(approximate.name);
+        setShowSuggestions(false);
+        setLocationError(message);
+        return true;
+      }
+      return false;
+    };
+
     if (!navigator.geolocation) {
-      if (showDenyError) {
-        setLocationError('Tu navegador no soporta geolocalizacion.');
+      const usedApproximate = await fallbackToApproximate(
+        'Tu navegador no soporta geolocalizacion. Se uso una ubicacion aproximada por red.'
+      );
+      if (!usedApproximate && showDenyError) {
+        setLocationError('No se pudo obtener tu ubicacion. Puedes buscar manualmente.');
+      }
+      return;
+    }
+
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    if (!window.isSecureContext && !isLocalhost) {
+      const usedApproximate = await fallbackToApproximate(
+        'Tu sitio no usa HTTPS. Se uso una ubicacion aproximada por red.'
+      );
+      if (!usedApproximate && showDenyError) {
+        setLocationError('No se pudo obtener tu ubicacion. Puedes buscar manualmente.');
       }
       return;
     }
@@ -125,10 +176,15 @@ export default function MapView({
         setIsLocating(false);
       },
       () => {
-        if (showDenyError) {
-          setLocationError('No se pudo obtener tu ubicacion. Puedes buscar manualmente.');
-        }
-        setIsLocating(false);
+        void (async () => {
+          const usedApproximate = await fallbackToApproximate(
+            'No se pudo obtener tu ubicacion exacta. Se uso una ubicacion aproximada por red.'
+          );
+          if (!usedApproximate && showDenyError) {
+            setLocationError('No se pudo obtener tu ubicacion. Puedes buscar manualmente.');
+          }
+          setIsLocating(false);
+        })();
       },
       {
         enableHighAccuracy: false,
@@ -136,7 +192,7 @@ export default function MapView({
         maximumAge: 300000,
       }
     );
-  }, [onLocationSelect, resolveLocationName]);
+  }, [onLocationSelect, resolveApproximateLocationByIp, resolveLocationName]);
 
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {

@@ -19,6 +19,7 @@ const DEFAULT_LAT = -12.0464;
 const DEFAULT_LON = -77.0428;
 const DEFAULT_ALT = 14000;
 const DEFAULT_LOCATION_NAME = "Lima, Peru";
+const MIN_REQUEST_DISTANCE_METERS = 150;
 
 const AVATAR_MODEL_PATH = "/models/avatar/avatar.glb";
 
@@ -36,6 +37,13 @@ function getAvatarAnimationConfig(aqi: number | null) {
 function getAvatarModelPath(aqi: number | null) {
   void aqi;
   return AVATAR_MODEL_PATH;
+}
+
+function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const x = toRad(lon2 - lon1) * Math.cos(toRad((lat1 + lat2) / 2));
+  const y = toRad(lat2 - lat1);
+  return Math.sqrt(x * x + y * y) * 6371000;
 }
 
 function getLungModelPath(lungHealth: number) {
@@ -415,6 +423,11 @@ const InteractiveMap = () => {
     const Cesium = window.Cesium;
     const viewer = viewerRef.current;
     if (!viewer) return;
+
+    const distanceMeters = getDistanceMeters(lat, lon, newLat, newLon);
+    if (distanceMeters < MIN_REQUEST_DISTANCE_METERS) {
+      return;
+    }
 
     if (!characterEntityRef.current) {
       createCharacterEntity(newLon, newLat);
