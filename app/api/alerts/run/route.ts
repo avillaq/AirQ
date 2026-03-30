@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbPool } from '@/lib/server-db';
-import { createUnsubscribeToken, ensureSubscriptionsSchema } from '@/lib/alerts-db';
+import { createUnsubscribeToken } from '@/lib/alerts-db';
 import { fetchCurrentUsAqi, isInCooldown, sendAqiAlertEmail } from '@/lib/alerts-service';
+import { prisma } from '@/lib/prisma';
 
 const DEFAULT_COOLDOWN_HOURS = 12;
-
-type SubscriptionRow = {
-  id: number;
-  fullname: string;
-  email: string;
-  latitude: number;
-  longitude: number;
-  threshold: number;
-  unsubscribe_token: string | null;
-  last_alert_sent_at: Date | null;
-};
 
 function isAuthorized(request: NextRequest): boolean {
   const requiredSecret = process.env.ALERTS_RUN_SECRET;
@@ -41,17 +30,22 @@ export async function POST(request: NextRequest) {
   }
 
   const cooldownHours = Number(process.env.ALERTS_COOLDOWN_HOURS || DEFAULT_COOLDOWN_HOURS);
-  const pool = getDbPool();
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      status: 'active',
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      latitude: true,
+      longitude: true,
+      threshold: true,
+      unsubscribeToken: true,
+      lastAlertSentAt: true,
+    },
+  });
 
-  await ensureSubscriptionsSchema(pool);
-
-  const queryResult = await pool.query<SubscriptionRow>(
-    `SELECT id, fullname, email, latitude, longitude, threshold, unsubscribe_token, last_alert_sent_at
-     FROM subscriptions
-     WHERE status = 'active'`
-  );
-
-  const subscriptions = queryResult.rows;
   if (!subscriptions.length) {
     return NextResponse.json({
       status: 'ok',
@@ -71,34 +65,36 @@ export async function POST(request: NextRequest) {
   let skippedBelowThreshold = 0;
 
   for (const row of subscriptions) {
-    const coordKey = toCoordKey(Number(row.latitude), Number(row.longitude));
+    const coordKey = toCoordKey(row.latitude, row.longitude);
 
     if (!aqiByCoord.has(coordKey)) {
-      const aqi = await fetchCurrentUsAqi(Number(row.latitude), Number(row.longitude));
+      const aqi = await fetchCurrentUsAqi(row.latitude, row.longitude);
       aqiByCoord.set(coordKey, aqi);
     }
 
     const aqi = aqiByCoord.get(coordKey);
 
-    if (aqi === null || aqi === undefined || aqi <= Number(row.threshold)) {
+    if (aqi === null || aqi === undefined || aqi <= row.threshold) {
       skippedBelowThreshold += 1;
       continue;
     }
 
-    const lastSent = row.last_alert_sent_at ? new Date(row.last_alert_sent_at) : null;
+    const lastSent = row.lastAlertSentAt ? new Date(row.lastAlertSentAt) : null;
     if (isInCooldown(lastSent, cooldownHours)) {
       skippedCooldown += 1;
       continue;
     }
 
-    const token = row.unsubscribe_token || createUnsubscribeToken();
-    if (!row.unsubscribe_token) {
-      await pool.query(
-        `UPDATE subscriptions
-         SET unsubscribe_token = $1, updated_at = NOW()
-         WHERE id = $2`,
-        [token, row.id]
-      );
+    const token = row.unsubscribeToken || createUnsubscribeToken();
+    if (!row.unsubscribeToken) {
+      await prisma.subscription.update({
+        where: {
+          id: row.id,
+        },
+        data: {
+          unsubscribeToken: token,
+        },
+      });
     }
 
     const baseUrl = getBaseUrl(request);
@@ -107,20 +103,22 @@ export async function POST(request: NextRequest) {
     try {
       await sendAqiAlertEmail({
         to: row.email,
-        fullName: row.fullname,
+        fullName: row.fullName,
         aqi,
-        threshold: Number(row.threshold),
-        locationLabel: `${Number(row.latitude).toFixed(3)}, ${Number(row.longitude).toFixed(3)}`,
+        threshold: row.threshold,
+        locationLabel: `${row.latitude.toFixed(3)}, ${row.longitude.toFixed(3)}`,
         unsubscribeUrl,
       });
 
       sent += 1;
-      await pool.query(
-        `UPDATE subscriptions
-         SET last_alert_sent_at = $1, updated_at = NOW()
-         WHERE id = $2`,
-        [now.toISOString(), row.id]
-      );
+      await prisma.subscription.update({
+        where: {
+          id: row.id,
+        },
+        data: {
+          lastAlertSentAt: now,
+        },
+      });
     } catch {
       failed += 1;
     }

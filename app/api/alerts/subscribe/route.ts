@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUnsubscribeToken, ensureSubscriptionsSchema } from '@/lib/alerts-db';
-import { getDbPool } from '@/lib/server-db';
+import { Prisma } from '@/generated/prisma/client';
+import { createUnsubscribeToken } from '@/lib/alerts-db';
 import { getAlertSensitivityGroup, getAlertThresholdByAge } from '@/lib/aqi';
+import { prisma } from '@/lib/prisma';
 import {
   ApiValidationError,
   parseLatLngFromLocation,
@@ -22,13 +23,18 @@ export async function POST(request: NextRequest) {
     const threshold = getAlertThresholdByAge(age);
     const unsubscribeToken = createUnsubscribeToken();
 
-    const pool = getDbPool();
-    await ensureSubscriptionsSchema(pool);
-    await pool.query(
-      `INSERT INTO subscriptions (fullname, age, email, latitude, longitude, threshold, status, unsubscribe_token, last_alert_sent_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, NULL, NOW())`,
-      [`${firstName} ${lastName}`, age, email, lat, lng, threshold, unsubscribeToken]
-    );
+    await prisma.subscription.create({
+      data: {
+        fullName: `${firstName} ${lastName}`,
+        age,
+        email,
+        latitude: lat,
+        longitude: lng,
+        threshold,
+        status: 'active',
+        unsubscribeToken,
+      },
+    });
 
     return NextResponse.json(
       {
@@ -40,19 +46,19 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
+    if (error instanceof ApiValidationError) {
+      return NextResponse.json({ status: 'error', message: error.message }, { status: error.statusCode });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json({ status: 'error', message: 'Este correo ya está suscrito' }, { status: 409 });
+    }
+
     const errorCode = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : undefined;
     const errorMessage =
       typeof error === 'object' && error !== null && 'message' in error
         ? String((error as { message?: unknown }).message)
         : undefined;
-
-    if (error instanceof ApiValidationError) {
-      return NextResponse.json({ status: 'error', message: error.message }, { status: error.statusCode });
-    }
-
-    if (errorCode === '23505') {
-      return NextResponse.json({ status: 'error', message: 'Este correo ya está suscrito' }, { status: 409 });
-    }
 
     if (
       typeof errorMessage === 'string' &&

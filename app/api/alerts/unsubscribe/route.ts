@@ -1,29 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbPool } from '@/lib/server-db';
-import { ensureSubscriptionsSchema } from '@/lib/alerts-db';
+import { prisma } from '@/lib/prisma';
 
 async function unsubscribeByToken(token: string): Promise<{ ok: boolean; message: string }> {
-  const pool = getDbPool();
-  await ensureSubscriptionsSchema(pool);
+  const updateResult = await prisma.subscription.updateMany({
+    where: {
+      unsubscribeToken: token,
+      status: 'active',
+    },
+    data: {
+      status: 'unsubscribed',
+    },
+  });
 
-  const updateResult = await pool.query(
-    `UPDATE subscriptions
-     SET status = 'unsubscribed', updated_at = NOW()
-     WHERE unsubscribe_token = $1 AND status = 'active'
-     RETURNING email`,
-    [token]
-  );
-
-  if (updateResult.rowCount && updateResult.rowCount > 0) {
+  if (updateResult.count > 0) {
     return { ok: true, message: 'Suscripción cancelada correctamente' };
   }
 
-  const existing = await pool.query(
-    `SELECT status FROM subscriptions WHERE unsubscribe_token = $1 LIMIT 1`,
-    [token]
-  );
+  const existing = await prisma.subscription.findFirst({
+    where: {
+      unsubscribeToken: token,
+    },
+    select: {
+      status: true,
+    },
+  });
 
-  if (!existing.rowCount) {
+  if (!existing) {
     return { ok: false, message: 'Token de desuscripción inválido' };
   }
 

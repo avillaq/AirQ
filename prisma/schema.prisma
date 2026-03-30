@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Subscription {
+  id               BigInt    @id @default(autoincrement()) @db.BigInt
+  fullName         String    @map("fullname")
+  age              Int
+  email            String
+  latitude         Float     @db.DoublePrecision
+  longitude        Float     @db.DoublePrecision
+  threshold        Int
+  status           String    @default("active")
+  unsubscribeToken String?   @unique @map("unsubscribe_token")
+  lastAlertSentAt  DateTime? @map("last_alert_sent_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status], map: "subscriptions_status_idx")
+  @@map("subscriptions")
+}
