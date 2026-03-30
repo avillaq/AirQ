@@ -51,6 +51,9 @@ export interface CesiumViewer {
       ellipsoid: unknown;
       enableLighting: boolean;
     };
+    screenSpaceCameraController: {
+      minimumZoomDistance: number;
+    };
     skyAtmosphere: {
       show: boolean;
     };
@@ -76,9 +79,15 @@ export interface CesiumApi {
     options: {
       baseLayerPicker: boolean;
       geocoder: boolean;
+      homeButton?: boolean;
+      sceneModePicker?: boolean;
+      navigationHelpButton?: boolean;
+      fullscreenButton?: boolean;
       timeline: boolean;
       animation: boolean;
       shouldAnimate: boolean;
+      selectionIndicator?: boolean;
+      infoBox?: boolean;
       terrainProvider: unknown;
     }
   ) => CesiumViewer;

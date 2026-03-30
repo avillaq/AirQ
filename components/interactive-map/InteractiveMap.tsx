@@ -15,19 +15,22 @@ import type {
 import "./InteractiveMap.css";
 
 const NEXT_PUBLIC_CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN;
+const DEFAULT_LAT = -12.0464;
+const DEFAULT_LON = -77.0428;
+const DEFAULT_ALT = 14000;
+const DEFAULT_LOCATION_NAME = "Lima, Peru";
 
 const AVATAR_MODEL_PATH = "/models/avatar/avatar.glb";
 
 type ModelViewerElement = HTMLElement & {
   play: (options?: { repetitions?: number; pingpong?: boolean }) => void;
-  pause: () => void;
 };
 
 function getAvatarAnimationConfig(aqi: number | null) {
   if (aqi === null || aqi === undefined) return { animationName: "Idle", autoPlay: true };
   if (aqi <= 100) return { animationName: "Wave", autoPlay: true };
   if (aqi <= 200) return { animationName: "estornudar", autoPlay: true };
-  return { animationName: "Death", autoPlay: false };
+  return { animationName: "Death", autoPlay: true };
 }
 
 function getAvatarModelPath(aqi: number | null) {
@@ -69,19 +72,19 @@ const InteractiveMap = () => {
   const interactionCleanupRef = useRef<(() => void) | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  const [lat, setLat] = useState(-16.409);
-  const [lon, setLon] = useState(-71.5375);
-  const [alt, setAlt] = useState(3000);
+  const [lat, setLat] = useState(DEFAULT_LAT);
+  const [lon, setLon] = useState(DEFAULT_LON);
+  const [alt, setAlt] = useState(DEFAULT_ALT);
   const [aqi, setAqi] = useState<number | null>(null);
   const [aqiSource, setAqiSource] = useState<AqiSource>('unavailable');
   const [aqiStatusMessage, setAqiStatusMessage] = useState('Cargando AQI en vivo...');
-  const [locationName, setLocationName] = useState("Arequipa, Peru");
+  const [locationName, setLocationName] = useState(DEFAULT_LOCATION_NAME);
   const [lungHealth, setLungHealth] = useState(100);
   const [timeInLocation, setTimeInLocation] = useState(0);
   const [coordsDisplay, setCoordsDisplay] = useState<CoordsDisplay>({
-    lat: '-16.4090',
-    lon: '-71.5375',
-    alt: 3000
+    lat: DEFAULT_LAT.toFixed(4),
+    lon: DEFAULT_LON.toFixed(4),
+    alt: DEFAULT_ALT
   });
   const [isDragging, setIsDragging] = useState(false);
 
@@ -140,7 +143,7 @@ const InteractiveMap = () => {
   const handleCitySelect = (city: City) => {
     setLat(city.lat);
     setLon(city.lng);
-    setAlt(3000);
+    setAlt(DEFAULT_ALT);
     setSearchQuery(`${city.city}, ${city.country}`);
     setShowSuggestions(false);
     setLocationName(`${city.city}, ${city.country}`);
@@ -150,7 +153,7 @@ const InteractiveMap = () => {
     if (!viewer) return;
 
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(city.lng, city.lat, 3000),
+      destination: Cesium.Cartesian3.fromDegrees(city.lng, city.lat, DEFAULT_ALT),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-45),
@@ -158,7 +161,7 @@ const InteractiveMap = () => {
       },
       duration: 3
     });
-    moveCharacterTo(city.lng, city.lat);
+    moveCharacterTo(city.lng, city.lat, `${city.city}, ${city.country}`);
   };
 
   useEffect(() => {
@@ -227,9 +230,15 @@ const InteractiveMap = () => {
     const viewer = new Cesium.Viewer(cesiumContainer.current, {
       baseLayerPicker: false,
       geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      fullscreenButton: false,
       timeline: false,
       animation: false,
       shouldAnimate: true,
+      selectionIndicator: false,
+      infoBox: false,
       terrainProvider: await Cesium.createWorldTerrainAsync()
     });
     viewerRef.current = viewer;
@@ -254,6 +263,7 @@ const InteractiveMap = () => {
 
     viewer.scene.globe.enableLighting = true;
     viewer.scene.skyAtmosphere.show = true;
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = DEFAULT_ALT;
 
     const mouseCleanup = setupMouseEvents();
     const dragDropCleanup = setupAvatarDragDrop();
@@ -308,18 +318,6 @@ const InteractiveMap = () => {
       characterEntityRef.current.model.uri = modelPath;
     }
   }, [aqi, isMounted]);
-
-  useEffect(() => {
-    const avatarEl = avatarModelRef.current;
-    if (!avatarEl) return;
-    const animation = getAvatarAnimationConfig(aqi);
-
-    if (animation.autoPlay) {
-      avatarEl.play();
-    } else {
-      avatarEl.pause();
-    }
-  }, [aqi]);
 
 
   const setupMouseEvents = () => {
@@ -413,8 +411,14 @@ const InteractiveMap = () => {
     };
   };
 
-  const moveCharacterTo = (newLon: number, newLat: number) => {
+  const moveCharacterTo = (newLon: number, newLat: number, displayName?: string) => {
     const Cesium = window.Cesium;
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    if (!characterEntityRef.current) {
+      createCharacterEntity(newLon, newLat);
+    }
     if (!characterEntityRef.current) return;
 
     characterEntityRef.current.position = Cesium.Cartesian3.fromDegrees(
@@ -425,12 +429,14 @@ const InteractiveMap = () => {
 
     setLat(newLat);
     setLon(newLon);
-    updateAQIData(newLon, newLat);
+    updateAQIData(newLon, newLat, displayName);
     resetLocationTimer();
     createParticleAnimation();
   };
 
-  const updateAQIData = async (lon: number, lat: number) => {
+  const updateAQIData = async (lon: number, lat: number, displayName?: string) => {
+    const fallbackName = displayName || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+
     try {
       const selectedLocation = { lat, lng: lon };
       const airQuality = (await getAirQualityData(selectedLocation)) as AirQualityResponse;
@@ -446,21 +452,14 @@ const InteractiveMap = () => {
         setAqiStatusMessage('AQI en vivo');
       }
 
-      setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
+      setLocationName(fallbackName);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error de red al consultar el AQI';
       setAqi(null);
       setAqiSource('unavailable');
       setAqiStatusMessage(message);
-      setLocationName(`${lat.toFixed(3)}, ${lon.toFixed(3)}`);
+      setLocationName(fallbackName);
     }
-  };
-
-  const parseInputNumber = (value: string | number | null | undefined): number => {
-    if (value === null || value === undefined || value === '') {
-      return NaN;
-    }
-    return Number(String(value).replace(',', '.'));
   };
 
   const createParticleAnimation = () => {
@@ -498,46 +497,26 @@ const InteractiveMap = () => {
     }
   };
 
-  const flyToLocation = () => {
-    const Cesium = window.Cesium;
-    const viewer = viewerRef.current;
-    const parsedLat = parseInputNumber(lat);
-    const parsedLon = parseInputNumber(lon);
-    const parsedAlt = parseInputNumber(alt);
-
-    if (!viewer || !Number.isFinite(parsedLat) || !Number.isFinite(parsedLon) || !Number.isFinite(parsedAlt)) {
-      alert('Ingresa coordenadas válidas.');
-      return;
-    }
-
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(parsedLon, parsedLat, parsedAlt),
-      orientation: {
-        heading: Cesium.Math.toRadians(0),
-        pitch: Cesium.Math.toRadians(-45),
-        roll: 0
-      },
-      duration: 3
-    });
-    moveCharacterTo(parsedLon, parsedLat);
-  };
-
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter") flyToLocation();
       if (e.key === "Escape") {
         if (viewerRef.current) {
           viewerRef.current.entities.removeAll();
-          createCharacterEntity(-71.5375, -16.409);
+          createCharacterEntity(DEFAULT_LON, DEFAULT_LAT);
         }
-        setLat(-16.409);
-        setLon(-71.5375);
-        setAlt(3000);
+        setLat(DEFAULT_LAT);
+        setLon(DEFAULT_LON);
+        setAlt(DEFAULT_ALT);
         setLungHealth(100);
         setAqi(null);
         setAqiSource('unavailable');
         setAqiStatusMessage('Cargando AQI en vivo...');
-        setLocationName("Arequipa, Peru");
+        setLocationName(DEFAULT_LOCATION_NAME);
+        setCoordsDisplay({
+          lat: DEFAULT_LAT.toFixed(4),
+          lon: DEFAULT_LON.toFixed(4),
+          alt: DEFAULT_ALT
+        });
         setTimeInLocation(0);
       }
     };
@@ -599,70 +578,35 @@ const InteractiveMap = () => {
         <span className="home-text">Inicio</span>
       </Link>
 
-      <div className="controls">
-        <h3>Buscar ciudad</h3>
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Buscar ciudad o país..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
-          />
-          {showSuggestions && filteredCities.length > 0 && (
-            <div className="suggestions-dropdown">
-              {filteredCities.map((city, index) => (
-                <div
-                  key={index}
-                  className="suggestion-item"
-                  onClick={() => handleCitySelect(city)}
-                >
-                  <span className="city-name">{city.city}</span>
-                  <span className="country-name">{city.country}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <h3 style={{ marginTop: 20 }}>Coordenadas manuales</h3>
-        <div className="control-group">
-          <label>Latitud</label>
-          <input
-            type="number"
-            step="0.0001"
-            placeholder="-16.409"
-            value={lat}
-            onChange={(e) => setLat(parseInputNumber(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <label>Longitud</label>
-          <input
-            type="number"
-            step="0.0001"
-            placeholder="-71.5375"
-            value={lon}
-            onChange={(e) => setLon(parseInputNumber(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <label>Altitud</label>
-          <input
-            type="number"
-            min={100}
-            max={50000}
-            value={alt}
-            onChange={(e) => setAlt(parseInputNumber(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <button onClick={flyToLocation}>Ir a ubicación</button>
-        </div>
-      </div>
-
       <div className="status-panels">
+        <div className="controls">
+          <h3>Buscar ciudad</h3>
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Buscar ciudad o país..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
+            />
+            {showSuggestions && filteredCities.length > 0 && (
+              <div className="suggestions-dropdown">
+                {filteredCities.map((city, index) => (
+                  <div
+                    key={index}
+                    className="suggestion-item"
+                    onClick={() => handleCitySelect(city)}
+                  >
+                    <span className="city-name">{city.city}</span>
+                    <span className="country-name">{city.country}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="character-panel">
           <h3>Tu avatar</h3>
           <div className="character-status">
@@ -680,12 +624,13 @@ const InteractiveMap = () => {
                   animation-name={avatarAnimation.animationName}
                   autoplay={avatarAnimation.autoPlay}
                   auto-rotate
+                  camera-controls
                   loading="lazy"
                   exposure="1"
                   shadow-intensity="1"
                   style={{
                     width: '100%',
-                    height: '120px',
+                    height: '92px',
                     transition: 'filter 0.5s ease',
                     pointerEvents: 'none',
                     filter: avatarFilter
@@ -726,7 +671,7 @@ const InteractiveMap = () => {
                 shadow-intensity="1"
                 style={{
                   width: '100%',
-                  height: '200px',
+                  height: '132px',
                   filter: lungFilter
                 }}
               />

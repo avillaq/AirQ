@@ -17,18 +17,18 @@
 
 .home-link {
     position: absolute;
-    top: 16px;
+    top: 8px;
     left: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     background: rgba(15, 18, 17, 0.95);
     color: hsl(var(--primary));
-    padding: 10px 18px;
-    border-radius: 12px;
-    font-size: 14px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 600;
-    z-index: 10;
+    z-index: 30;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(120, 252, 214, 0.2);
@@ -48,33 +48,32 @@
 }
 
 .controls {
-    position: absolute;
-    top: 16px;
-    right: 16px;
+    position: relative;
     background: rgba(15, 18, 17, 0.95);
-    padding: 20px;
-    border-radius: 16px;
-    z-index: 10;
+    padding: 10px;
+    border-radius: 12px;
+    z-index: 14;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    min-width: 300px;
+    min-width: 200px;
+    max-width: 200px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .controls h3 {
-    margin: 0 0 14px 0;
-    font-size: 15px;
+    margin: 0 0 8px 0;
+    font-size: 12px;
     color: hsl(var(--foreground));
     font-weight: 600;
 }
 
 .control-group {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .control-group label {
     display: block;
-    font-size: 12px;
+    font-size: 11px;
     color: hsl(var(--muted-foreground));
     margin-bottom: 6px;
     font-weight: 500;
@@ -82,11 +81,11 @@
 
 .control-group input {
     width: calc(100% - 8px);
-    padding: 8px 10px;
+    padding: 7px 9px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 12px;
     color: hsl(var(--foreground));
     transition: all 0.2s ease;
 }
@@ -99,13 +98,13 @@
 
 .control-group button {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     background: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     transition: all 0.2s ease;
 }
@@ -118,16 +117,16 @@
 
 .search-container {
     position: relative;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
 .search-input {
-    width: calc(100% - 16px);
-    padding: 10px 12px;
+    width: calc(100% - 12px);
+    padding: 7px 8px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 11px;
     color: hsl(var(--foreground));
     transition: all 0.3s ease;
 }
@@ -155,7 +154,7 @@
 }
 
 .suggestion-item {
-    padding: 12px 14px;
+    padding: 8px 10px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -175,11 +174,11 @@
 .city-name {
     font-weight: 600;
     color: hsl(var(--foreground));
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .country-name {
-    font-size: 11px;
+    font-size: 10px;
     color: hsl(var(--muted-foreground));
     background: rgba(255, 255, 255, 0.05);
     padding: 3px 8px;
@@ -206,23 +205,24 @@
 
 .status-panels {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
+    bottom: 12px;
+    left: 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    z-index: 10;
+    gap: 8px;
+    z-index: 12;
 }
 
 .character-panel,
 .lung-panel {
     background: rgba(15, 18, 17, 0.95);
-    padding: 18px;
-    border-radius: 14px;
+    padding: 12px;
+    border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    min-width: 250px;
+    min-width: 200px;
+    max-width: 200px;
 }
 
 .lung-info {
@@ -237,9 +237,9 @@
 
 .character-panel h3,
 .lung-panel h3 {
-    margin: 0 0 12px 0;
+    margin: 0 0 8px 0;
     color: hsl(var(--foreground));
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -249,8 +249,8 @@
 .character-status {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .character-avatar {
@@ -276,25 +276,25 @@
 }
 
 .character-mood {
-    font-size: 14px;
+    font-size: 12px;
     color: hsl(var(--foreground));
     font-weight: 600;
     margin-bottom: 4px;
 }
 
 .drag-hint {
-    font-size: 11px;
+    font-size: 10px;
     color: hsl(var(--muted-foreground));
 }
 
 .aqi-indicator {
-    padding: 8px 14px;
+    padding: 7px 10px;
     border-radius: 8px;
     color: white;
     font-weight: 600;
     text-align: center;
-    margin-bottom: 12px;
-    font-size: 13px;
+    margin-bottom: 8px;
+    font-size: 12px;
     transition: all 0.3s ease;
 }
 
@@ -327,25 +327,25 @@
 }
 
 .aqi-source-indicator {
-    font-size: 11px;
+    font-size: 10px;
     color: hsl(var(--foreground));
     font-weight: 600;
     margin-bottom: 4px;
 }
 
 .aqi-status-message {
-    font-size: 11px;
+    font-size: 10px;
     color: hsl(var(--muted-foreground));
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .location-info {
-    font-size: 12px;
+    font-size: 11px;
     color: hsl(var(--muted-foreground));
 }
 
 .location-info div {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .location-info span {
@@ -367,11 +367,11 @@
 
 .lung-health-bar {
     width: 100%;
-    height: 18px;
+    height: 14px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -382,7 +382,7 @@
 }
 
 .lung-health-text {
-    font-size: 12px;
+    font-size: 11px;
     color: hsl(var(--muted-foreground));
     text-align: center;
 }
@@ -439,30 +439,53 @@
 }
 
 @media (max-width: 768px) {
+    .interactive-map-container {
+        padding-top: 56px;
+    }
+
     .controls {
-        min-width: 260px;
-        padding: 16px;
+        min-width: 176px;
+        max-width: 176px;
+        padding: 8px;
+        z-index: 18;
     }
 
     .status-panels {
-        max-width: 220px;
+        left: 10px;
+        bottom: 58px;
+        max-width: 180px;
+        gap: 6px;
     }
 
     .character-panel,
     .lung-panel {
-        min-width: 220px;
-        padding: 14px;
+        min-width: 180px;
+        max-width: 180px;
+        padding: 10px;
     }
 
     .home-link {
-        padding: 8px 14px;
+        top: 6px;
+        left: 10px;
+        padding: 6px 10px;
         font-size: 12px;
+    }
+
+    .coords-display {
+        left: 10px;
+        right: 10px;
+        bottom: 8px;
+        transform: none;
+        text-align: center;
+        font-size: 11px;
+        padding: 6px 10px;
+        z-index: 26;
     }
 }
 
 .avatar-3d-container {
-    width: 100px;
-    height: 120px;
+    width: 80px;
+    height: 92px;
     display: flex;
     align-items: center;
     justify-content: center;
