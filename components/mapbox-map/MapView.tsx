@@ -17,8 +17,8 @@ import type {
 
 const AQI_COLOR_EXPRESSION = US_AQI_MAPBOX_COLOR_EXPRESSION as unknown as mapboxgl.ExpressionSpecification;
 
-const token = process.env.MAPBOX_TOKEN;
-if (!token) console.error('Falta MAPBOX_TOKEN');
+const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+if (!token) console.error('Falta NEXT_PUBLIC_MAPBOX_TOKEN');
 mapboxgl.accessToken = token || '';
 
 const SELECTED_LOCATION_SOURCE_ID = 'selected-location';
