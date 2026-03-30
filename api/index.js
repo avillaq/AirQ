@@ -127,20 +127,6 @@ export async function unsubscribeFromAlerts(token) {
   }
 }
 
-export async function getHistoricalMerra2Data({ lat, lng, date, hour = 12 }) {
-  return requestWithRetry(async () => {
-    const { data } = await api.get('/historical/merra2', {
-      params: {
-        lat,
-        lng,
-        date,
-        hour,
-      },
-    });
-    return data;
-  });
-}
-
 // Función para buscar ciudades
 export async function searchCities(query, limit = 10) {
   return requestWithRetry(async () => {

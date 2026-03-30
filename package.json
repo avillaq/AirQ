@@ -2,9 +2,7 @@
   "name": "airq",
   "version": "0.1.0",
   "scripts": {
-    "dev:server": "cd server && python wsgi.py",
-    "dev:client": "next dev",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "next dev",
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
@@ -43,7 +41,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.182.0",
-    "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-config-next": "^15.5.4",
     "postcss": "^8.5",
