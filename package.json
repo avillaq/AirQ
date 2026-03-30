@@ -27,6 +27,7 @@
     "pg": "^8.13.1",
     "react": "^19",
     "react-dom": "^19",
+    "resend": "^4.8.0",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",

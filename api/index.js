@@ -118,6 +118,15 @@ export async function subscribeToAlerts(dataToSend) {
   }
 }
 
+export async function unsubscribeFromAlerts(token) {
+  try {
+    const { data } = await api.post('/alerts/unsubscribe', { token });
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 export async function getHistoricalMerra2Data({ lat, lng, date, hour = 12 }) {
   return requestWithRetry(async () => {
     const { data } = await api.get('/historical/merra2', {

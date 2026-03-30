@@ -1,0 +1,25 @@
+name: Run AQI Alerts
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger alerts job endpoint
+        env:
+          ALERTS_RUN_URL: ${{ secrets.ALERTS_RUN_URL }}
+          ALERTS_RUN_SECRET: ${{ secrets.ALERTS_RUN_SECRET }}
+        run: |
+          if [ -z "$ALERTS_RUN_URL" ] || [ -z "$ALERTS_RUN_SECRET" ]; then
+            echo "Missing ALERTS_RUN_URL or ALERTS_RUN_SECRET"
+            exit 1
+          fi
+
+          curl --fail --show-error --silent \
+            -X POST "$ALERTS_RUN_URL" \
+            -H "x-alerts-secret: $ALERTS_RUN_SECRET" \
+            -H "Content-Type: application/json"

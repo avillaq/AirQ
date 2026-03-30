@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createUnsubscribeToken, ensureSubscriptionsSchema } from '@/lib/alerts-db';
 import { getDbPool } from '@/lib/server-db';
 import { getAlertSensitivityGroup, getAlertThresholdByAge } from '@/lib/aqi';
 import {
@@ -19,12 +20,14 @@ export async function POST(request: NextRequest) {
     const age = toInteger(body?.age, 'age', 1, 120);
     const { lat, lng } = parseLatLngFromLocation(body?.location);
     const threshold = getAlertThresholdByAge(age);
+    const unsubscribeToken = createUnsubscribeToken();
 
     const pool = getDbPool();
+    await ensureSubscriptionsSchema(pool);
     await pool.query(
-      `INSERT INTO subscriptions (fullname, age, email, latitude, longitude, threshold)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [`${firstName} ${lastName}`, age, email, lat, lng, threshold]
+      `INSERT INTO subscriptions (fullname, age, email, latitude, longitude, threshold, status, unsubscribe_token, last_alert_sent_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, NULL, NOW())`,
+      [`${firstName} ${lastName}`, age, email, lat, lng, threshold, unsubscribeToken]
     );
 
     return NextResponse.json(

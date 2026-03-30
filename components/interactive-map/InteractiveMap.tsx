@@ -14,7 +14,7 @@ import type {
 } from '@/types/interactive-map';
 import "./InteractiveMap.css";
 
-const CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN;
+const CESIUM_TOKEN = process.env.CESIUM_TOKEN;
 
 const AVATAR_STATES = {
   good: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cpath d='M45 38 Q50 42 55 38' stroke='%23000' stroke-width='2' fill='none'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%2310b981'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E",
