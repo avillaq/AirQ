@@ -105,6 +105,7 @@ export interface CesiumApi {
   };
   ScreenSpaceEventHandler: new (canvas: HTMLCanvasElement) => {
     setInputAction: (cb: (event: unknown) => void, eventType: unknown) => void;
+    destroy: () => void;
   };
   ScreenSpaceEventType: {
     MOUSE_MOVE: unknown;

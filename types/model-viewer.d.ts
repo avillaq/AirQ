@@ -7,6 +7,8 @@ declare module 'react' {
         src?: string;
         alt?: string;
         loading?: 'eager' | 'lazy' | 'auto';
+        'animation-name'?: string;
+        autoplay?: boolean;
         exposure?: string;
         'shadow-intensity'?: string;
         'camera-controls'?: boolean;

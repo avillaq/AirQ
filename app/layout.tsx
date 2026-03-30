@@ -4,7 +4,6 @@ import './globals.css'
 import { ReactNode } from 'react'
 import type { Viewport } from 'next'
 import { Toaster } from 'sonner'
-import { ModelViewerRegister } from '@/components/model-viewer-register'
 
 export const viewport: Viewport = {
   themeColor: '#000000',
@@ -42,7 +41,6 @@ export default function RootLayout({
         `}</style>
       </head>
       <body>
-        <ModelViewerRegister />
         <Toaster position="bottom-right" richColors />
         {children}
       </body>

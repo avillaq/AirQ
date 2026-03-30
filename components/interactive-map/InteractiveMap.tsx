@@ -16,25 +16,30 @@ import "./InteractiveMap.css";
 
 const NEXT_PUBLIC_CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN;
 
-const AVATAR_STATES = {
-  good: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cpath d='M45 38 Q50 42 55 38' stroke='%23000' stroke-width='2' fill='none'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%2310b981'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E",
-  moderate: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cline x1='45' y1='38' x2='55' y2='38' stroke='%23000' stroke-width='2'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%23f59e0b'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E",
-  unhealthy: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cpath d='M45 42 Q50 38 55 42' stroke='%23000' stroke-width='2' fill='none'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%23ef4444'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E",
-  critical: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='15' fill='%23fbbf24'/%3E%3Ccircle cx='45' cy='32' r='2' fill='%23000'/%3E%3Ccircle cx='55' cy='32' r='2' fill='%23000'/%3E%3Cpath d='M45 42 Q50 38 55 42' stroke='%23000' stroke-width='2' fill='none'/%3E%3Crect x='35' y='50' width='30' height='35' rx='15' fill='%23ef4444'/%3E%3Ccircle cx='30' cy='60' r='8' fill='%23fbbf24'/%3E%3Ccircle cx='70' cy='60' r='8' fill='%23fbbf24'/%3E%3Crect x='42' y='85' width='6' height='15' fill='%23451a03'/%3E%3Crect x='52' y='85' width='6' height='15' fill='%23451a03'/%3E%3C/svg%3E"
+const AVATAR_MODEL_PATH = "/models/avatar/avatar.glb";
+
+type ModelViewerElement = HTMLElement & {
+  play: (options?: { repetitions?: number; pingpong?: boolean }) => void;
+  pause: () => void;
 };
 
+function getAvatarAnimationConfig(aqi: number | null) {
+  if (aqi === null || aqi === undefined) return { animationName: "Idle", autoPlay: true };
+  if (aqi <= 100) return { animationName: "Wave", autoPlay: true };
+  if (aqi <= 200) return { animationName: "estornudar", autoPlay: true };
+  return { animationName: "Death", autoPlay: false };
+}
+
 function getAvatarModelPath(aqi: number | null) {
-  if (aqi === null || aqi === undefined) return "/models/avatar_coughing.glb";
-  if (aqi <= 100) return "/models/avatar_greeting.glb";
-  if (aqi <= 200) return "/models/avatar_coughing.glb";
-  return "/models/avatar_coughing.glb";
+  void aqi;
+  return AVATAR_MODEL_PATH;
 }
 
 function getLungModelPath(lungHealth: number) {
-  if (lungHealth > 75) return "/models/lung_healthy.glb";
-  if (lungHealth > 50) return "/models/lung_moderate.glb";
-  if (lungHealth > 25) return "/models/lung_unhealthy.glb";
-  return "/models/lung_dead.glb";
+  if (lungHealth > 75) return "/models/lung/lung_healthy.glb";
+  if (lungHealth > 50) return "/models/lung/lung_moderate.glb";
+  if (lungHealth > 25) return "/models/lung/lung_unhealthy.glb";
+  return "/models/lung/lung_dead.glb";
 }
 
 function getAQIClass(aqi: number | null) {
@@ -48,20 +53,20 @@ function getAQIText(aqi: number | null) {
 function getAvatarState(aqi: number | null) {
   const category = getUsAqiCategory(aqi).key;
 
-  if (category === 'unavailable') return { src: AVATAR_STATES.moderate, mood: "Sin datos" };
-  if (category === 'good') return { src: AVATAR_STATES.good, mood: "Saludable" };
-  if (category === 'moderate') return { src: AVATAR_STATES.moderate, mood: "Molestia leve" };
-  if (category === 'unhealthy-sensitive') return { src: AVATAR_STATES.moderate, mood: "Sensible" };
-  if (category === 'unhealthy') return { src: AVATAR_STATES.unhealthy, mood: "Afectado" };
-  if (category === 'very-unhealthy') return { src: AVATAR_STATES.critical, mood: "Muy afectado" };
-  return { src: AVATAR_STATES.critical, mood: "Critico" };
+  if (category === 'unavailable') return "Sin datos";
+  if (category === 'good') return "Saludable";
+  if (category === 'moderate') return "Molestia leve";
+  if (category === 'unhealthy-sensitive') return "Sensible";
+  if (category === 'unhealthy') return "Afectado";
+  if (category === 'very-unhealthy') return "Muy afectado";
+  return "Critico";
 }
 
 const InteractiveMap = () => {
   const cesiumContainer = useRef<HTMLDivElement | null>(null);
   const particlesContainer = useRef<HTMLDivElement | null>(null);
-  const lungModelRef = useRef<HTMLElement | null>(null);
-  const avatarModelViewerRef = useRef<HTMLElement | null>(null);
+  const avatarModelRef = useRef<ModelViewerElement | null>(null);
+  const interactionCleanupRef = useRef<(() => void) | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   const [lat, setLat] = useState(-16.409);
@@ -173,6 +178,9 @@ const InteractiveMap = () => {
       if (timerRef.current !== null) {
         clearInterval(timerRef.current);
       }
+      if (interactionCleanupRef.current) {
+        interactionCleanupRef.current();
+      }
       if (viewerRef.current) {
         viewerRef.current.destroy();
       }
@@ -185,10 +193,13 @@ const InteractiveMap = () => {
       clearInterval(timerRef.current);
     }
     timerRef.current = setInterval(() => {
-      setTimeInLocation((t) => t + 1);
-      if (timeInLocation % 3 === 0) {
-        updateLungHealth();
-      }
+      setTimeInLocation((t) => {
+        const next = t + 1;
+        if (next % 3 === 0) {
+          updateLungHealth();
+        }
+        return next;
+      });
     }, 1000);
     return () => {
       if (timerRef.current !== null) {
@@ -196,7 +207,7 @@ const InteractiveMap = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aqi, timeInLocation]);
+  }, [aqi]);
 
   const resetLocationTimer = () => {
     setTimeInLocation(0);
@@ -244,8 +255,12 @@ const InteractiveMap = () => {
     viewer.scene.globe.enableLighting = true;
     viewer.scene.skyAtmosphere.show = true;
 
-    setupMouseEvents();
-    setupAvatarDragDrop();
+    const mouseCleanup = setupMouseEvents();
+    const dragDropCleanup = setupAvatarDragDrop();
+    interactionCleanupRef.current = () => {
+      mouseCleanup();
+      dragDropCleanup();
+    };
     updateAQIData(lon, lat);
   };
 
@@ -292,30 +307,25 @@ const InteractiveMap = () => {
 
       characterEntityRef.current.model.uri = modelPath;
     }
-
-    if (avatarModelViewerRef.current) {
-      const modelPath = getAvatarModelPath(aqi);
-      avatarModelViewerRef.current.setAttribute('src', modelPath);
-
-      const numericAqi = aqi ?? 0;
-
-      if (numericAqi > 150) {
-        avatarModelViewerRef.current.style.filter = 'saturate(1.2) brightness(0.9)';
-      } else if (numericAqi > 100) {
-        avatarModelViewerRef.current.style.filter = 'saturate(1.1) brightness(0.95)';
-      } else if (numericAqi > 50) {
-        avatarModelViewerRef.current.style.filter = 'saturate(1.05)';
-      } else {
-        avatarModelViewerRef.current.style.filter = 'brightness(1)';
-      }
-    }
   }, [aqi, isMounted]);
+
+  useEffect(() => {
+    const avatarEl = avatarModelRef.current;
+    if (!avatarEl) return;
+    const animation = getAvatarAnimationConfig(aqi);
+
+    if (animation.autoPlay) {
+      avatarEl.play();
+    } else {
+      avatarEl.pause();
+    }
+  }, [aqi]);
 
 
   const setupMouseEvents = () => {
     const Cesium = window.Cesium;
     const viewer = viewerRef.current;
-    if (!viewer) return;
+    if (!viewer) return () => {};
 
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
@@ -350,20 +360,24 @@ const InteractiveMap = () => {
         moveCharacterTo(newLon, newLat);
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    return () => {
+      handler.destroy();
+    };
   };
 
   const setupAvatarDragDrop = () => {
     const cesiumContainerDiv = cesiumContainer.current;
-    if (!cesiumContainerDiv) return;
+    if (!cesiumContainerDiv) return () => {};
 
-    cesiumContainerDiv.addEventListener('dragover', (e: DragEvent) => {
+    const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       if (e.dataTransfer) {
         e.dataTransfer.dropEffect = 'move';
       }
-    });
+    };
 
-    cesiumContainerDiv.addEventListener('drop', (e: DragEvent) => {
+    const handleDrop = (e: DragEvent) => {
       e.preventDefault();
 
       const rect = cesiumContainerDiv.getBoundingClientRect();
@@ -388,7 +402,15 @@ const InteractiveMap = () => {
       }
 
       setIsDragging(false);
-    });
+    };
+
+    cesiumContainerDiv.addEventListener('dragover', handleDragOver);
+    cesiumContainerDiv.addEventListener('drop', handleDrop);
+
+    return () => {
+      cesiumContainerDiv.removeEventListener('dragover', handleDragOver);
+      cesiumContainerDiv.removeEventListener('drop', handleDrop);
+    };
   };
 
   const moveCharacterTo = (newLon: number, newLat: number) => {
@@ -550,7 +572,23 @@ const InteractiveMap = () => {
     );
   }
 
-  const avatarState = getAvatarState(aqi);
+  const avatarMood = getAvatarState(aqi);
+  const avatarAnimation = getAvatarAnimationConfig(aqi);
+  const numericAqi = aqi ?? 0;
+  const avatarFilter =
+    numericAqi > 150
+      ? 'saturate(1.2) brightness(0.9)'
+      : numericAqi > 100
+        ? 'saturate(1.1) brightness(0.95)'
+        : numericAqi > 50
+          ? 'saturate(1.05)'
+          : 'brightness(1)';
+  const lungFilter =
+    lungHealth > 70
+      ? 'brightness(1.1)'
+      : lungHealth > 40
+        ? 'saturate(1.2) brightness(0.95)'
+        : 'saturate(1.3) brightness(0.9)';
 
   return (
     <div className="interactive-map-container">
@@ -636,25 +674,27 @@ const InteractiveMap = () => {
             >
               {isMounted && (
                 <model-viewer
-                  ref={avatarModelViewerRef}
+                  ref={avatarModelRef}
                   src={getAvatarModelPath(aqi)}
                   alt="3D Avatar"
+                  animation-name={avatarAnimation.animationName}
+                  autoplay={avatarAnimation.autoPlay}
                   auto-rotate
-                  camera-controls
-                  loading="eager"
+                  loading="lazy"
                   exposure="1"
                   shadow-intensity="1"
                   style={{
                     width: '100%',
                     height: '120px',
                     transition: 'filter 0.5s ease',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    filter: avatarFilter
                   }}
                 />
               )}
             </div>
             <div className="character-details">
-              <div className="character-mood">{avatarState.mood}</div>
+              <div className="character-mood">{avatarMood}</div>
               <div className="drag-hint">Arrastra para mover</div>
             </div>
           </div>
@@ -677,22 +717,17 @@ const InteractiveMap = () => {
             {isMounted && (
               <model-viewer
                 id="lung-model"
-                ref={lungModelRef}
                 src={getLungModelPath(lungHealth)}
                 alt="3D Lung Model"
                 auto-rotate
                 camera-controls
-                loading="eager"
+                loading="lazy"
                 exposure="1"
                 shadow-intensity="1"
                 style={{
                   width: '100%',
                   height: '200px',
-                  filter: lungHealth > 70
-                    ? 'brightness(1.1)'
-                    : lungHealth > 40
-                      ? 'saturate(1.2) brightness(0.95)'
-                      : 'saturate(1.3) brightness(0.9)'
+                  filter: lungFilter
                 }}
               />
             )}
