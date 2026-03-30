@@ -5,7 +5,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "postinstall": "prisma generate",
-    "start": "npx prisma migrate deploy && node .next/standalone/server.js",
+    "start": "next start",
+    "start:prod": "npx prisma migrate deploy && node .next/standalone/server.js",
     "lint": "next lint"
   },
   "dependencies": {

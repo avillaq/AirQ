@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "build": {
+      "commands": [
+        "...",
+        "cp -r public .next/standalone/",
+        "cp -r .next/static .next/standalone/.next/"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "npm run start:prod"
+  }
+}
