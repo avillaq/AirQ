@@ -75,6 +75,7 @@ export const SubscriptionScalarFieldEnum = {
   fullName: 'fullName',
   age: 'age',
   email: 'email',
+  locationDisplay: 'locationDisplay',
   latitude: 'latitude',
   longitude: 'longitude',
   threshold: 'threshold',

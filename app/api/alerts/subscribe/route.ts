@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
     const email = toEmail(body?.email);
     const age = toInteger(body?.age, 'age', 1, 120);
     const { lat, lng } = parseLatLngFromLocation(body?.location);
+    const locationDisplayRaw = typeof body?.locationDisplay === 'string' ? body.locationDisplay.trim() : '';
+    const locationDisplay = locationDisplayRaw || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
     const threshold = getAlertThresholdByAge(age);
     const unsubscribeToken = createUnsubscribeToken();
 
@@ -28,6 +30,7 @@ export async function POST(request: NextRequest) {
         fullName: `${firstName} ${lastName}`,
         age,
         email,
+        locationDisplay,
         latitude: lat,
         longitude: lng,
         threshold,

@@ -47,6 +47,7 @@ export type SubscriptionMinAggregateOutputType = {
   fullName: string | null
   age: number | null
   email: string | null
+  locationDisplay: string | null
   latitude: number | null
   longitude: number | null
   threshold: number | null
@@ -62,6 +63,7 @@ export type SubscriptionMaxAggregateOutputType = {
   fullName: string | null
   age: number | null
   email: string | null
+  locationDisplay: string | null
   latitude: number | null
   longitude: number | null
   threshold: number | null
@@ -77,6 +79,7 @@ export type SubscriptionCountAggregateOutputType = {
   fullName: number
   age: number
   email: number
+  locationDisplay: number
   latitude: number
   longitude: number
   threshold: number
@@ -110,6 +113,7 @@ export type SubscriptionMinAggregateInputType = {
   fullName?: true
   age?: true
   email?: true
+  locationDisplay?: true
   latitude?: true
   longitude?: true
   threshold?: true
@@ -125,6 +129,7 @@ export type SubscriptionMaxAggregateInputType = {
   fullName?: true
   age?: true
   email?: true
+  locationDisplay?: true
   latitude?: true
   longitude?: true
   threshold?: true
@@ -140,6 +145,7 @@ export type SubscriptionCountAggregateInputType = {
   fullName?: true
   age?: true
   email?: true
+  locationDisplay?: true
   latitude?: true
   longitude?: true
   threshold?: true
@@ -242,6 +248,7 @@ export type SubscriptionGroupByOutputType = {
   fullName: string
   age: number
   email: string
+  locationDisplay: string | null
   latitude: number
   longitude: number
   threshold: number
@@ -280,6 +287,7 @@ export type SubscriptionWhereInput = {
   fullName?: Prisma.StringFilter<"Subscription"> | string
   age?: Prisma.IntFilter<"Subscription"> | number
   email?: Prisma.StringFilter<"Subscription"> | string
+  locationDisplay?: Prisma.StringNullableFilter<"Subscription"> | string | null
   latitude?: Prisma.FloatFilter<"Subscription"> | number
   longitude?: Prisma.FloatFilter<"Subscription"> | number
   threshold?: Prisma.IntFilter<"Subscription"> | number
@@ -295,6 +303,7 @@ export type SubscriptionOrderByWithRelationInput = {
   fullName?: Prisma.SortOrder
   age?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  locationDisplay?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
@@ -314,6 +323,7 @@ export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
   fullName?: Prisma.StringFilter<"Subscription"> | string
   age?: Prisma.IntFilter<"Subscription"> | number
   email?: Prisma.StringFilter<"Subscription"> | string
+  locationDisplay?: Prisma.StringNullableFilter<"Subscription"> | string | null
   latitude?: Prisma.FloatFilter<"Subscription"> | number
   longitude?: Prisma.FloatFilter<"Subscription"> | number
   threshold?: Prisma.IntFilter<"Subscription"> | number
@@ -328,6 +338,7 @@ export type SubscriptionOrderByWithAggregationInput = {
   fullName?: Prisma.SortOrder
   age?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  locationDisplay?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
@@ -351,6 +362,7 @@ export type SubscriptionScalarWhereWithAggregatesInput = {
   fullName?: Prisma.StringWithAggregatesFilter<"Subscription"> | string
   age?: Prisma.IntWithAggregatesFilter<"Subscription"> | number
   email?: Prisma.StringWithAggregatesFilter<"Subscription"> | string
+  locationDisplay?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
   latitude?: Prisma.FloatWithAggregatesFilter<"Subscription"> | number
   longitude?: Prisma.FloatWithAggregatesFilter<"Subscription"> | number
   threshold?: Prisma.IntWithAggregatesFilter<"Subscription"> | number
@@ -366,6 +378,7 @@ export type SubscriptionCreateInput = {
   fullName: string
   age: number
   email: string
+  locationDisplay?: string | null
   latitude: number
   longitude: number
   threshold: number
@@ -381,6 +394,7 @@ export type SubscriptionUncheckedCreateInput = {
   fullName: string
   age: number
   email: string
+  locationDisplay?: string | null
   latitude: number
   longitude: number
   threshold: number
@@ -396,6 +410,7 @@ export type SubscriptionUpdateInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   age?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  locationDisplay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   threshold?: Prisma.IntFieldUpdateOperationsInput | number
@@ -411,6 +426,7 @@ export type SubscriptionUncheckedUpdateInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   age?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  locationDisplay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   threshold?: Prisma.IntFieldUpdateOperationsInput | number
@@ -426,6 +442,7 @@ export type SubscriptionCreateManyInput = {
   fullName: string
   age: number
   email: string
+  locationDisplay?: string | null
   latitude: number
   longitude: number
   threshold: number
@@ -441,6 +458,7 @@ export type SubscriptionUpdateManyMutationInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   age?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  locationDisplay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   threshold?: Prisma.IntFieldUpdateOperationsInput | number
@@ -456,6 +474,7 @@ export type SubscriptionUncheckedUpdateManyInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   age?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  locationDisplay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.FloatFieldUpdateOperationsInput | number
   longitude?: Prisma.FloatFieldUpdateOperationsInput | number
   threshold?: Prisma.IntFieldUpdateOperationsInput | number
@@ -471,6 +490,7 @@ export type SubscriptionCountOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   age?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  locationDisplay?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
@@ -494,6 +514,7 @@ export type SubscriptionMaxOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   age?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  locationDisplay?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
@@ -509,6 +530,7 @@ export type SubscriptionMinOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   age?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  locationDisplay?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
@@ -547,16 +569,16 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type FloatFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
-}
-
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -574,6 +596,7 @@ export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   fullName?: boolean
   age?: boolean
   email?: boolean
+  locationDisplay?: boolean
   latitude?: boolean
   longitude?: boolean
   threshold?: boolean
@@ -589,6 +612,7 @@ export type SubscriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   fullName?: boolean
   age?: boolean
   email?: boolean
+  locationDisplay?: boolean
   latitude?: boolean
   longitude?: boolean
   threshold?: boolean
@@ -604,6 +628,7 @@ export type SubscriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   fullName?: boolean
   age?: boolean
   email?: boolean
+  locationDisplay?: boolean
   latitude?: boolean
   longitude?: boolean
   threshold?: boolean
@@ -619,6 +644,7 @@ export type SubscriptionSelectScalar = {
   fullName?: boolean
   age?: boolean
   email?: boolean
+  locationDisplay?: boolean
   latitude?: boolean
   longitude?: boolean
   threshold?: boolean
@@ -629,7 +655,7 @@ export type SubscriptionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "age" | "email" | "latitude" | "longitude" | "threshold" | "status" | "unsubscribeToken" | "lastAlertSentAt" | "createdAt" | "updatedAt", ExtArgs["result"]["subscription"]>
+export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "age" | "email" | "locationDisplay" | "latitude" | "longitude" | "threshold" | "status" | "unsubscribeToken" | "lastAlertSentAt" | "createdAt" | "updatedAt", ExtArgs["result"]["subscription"]>
 
 export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Subscription"
@@ -639,6 +665,7 @@ export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     fullName: string
     age: number
     email: string
+    locationDisplay: string | null
     latitude: number
     longitude: number
     threshold: number
@@ -1074,6 +1101,7 @@ export interface SubscriptionFieldRefs {
   readonly fullName: Prisma.FieldRef<"Subscription", 'String'>
   readonly age: Prisma.FieldRef<"Subscription", 'Int'>
   readonly email: Prisma.FieldRef<"Subscription", 'String'>
+  readonly locationDisplay: Prisma.FieldRef<"Subscription", 'String'>
   readonly latitude: Prisma.FieldRef<"Subscription", 'Float'>
   readonly longitude: Prisma.FieldRef<"Subscription", 'Float'>
   readonly threshold: Prisma.FieldRef<"Subscription", 'Int'>

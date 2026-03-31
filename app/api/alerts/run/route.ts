@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       id: true,
       fullName: true,
       email: true,
+      locationDisplay: true,
       latitude: true,
       longitude: true,
       threshold: true,
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = getBaseUrl(request);
     const unsubscribeUrl = `${baseUrl}/api/alerts/unsubscribe?token=${encodeURIComponent(token)}`;
+    const locationLabel = row.locationDisplay || `${row.latitude.toFixed(3)}, ${row.longitude.toFixed(3)}`;
 
     try {
       await sendAqiAlertEmail({
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
         fullName: row.fullName,
         aqi,
         threshold: row.threshold,
-        locationLabel: `${row.latitude.toFixed(3)}, ${row.longitude.toFixed(3)}`,
+        locationLabel,
         unsubscribeUrl,
       });
 

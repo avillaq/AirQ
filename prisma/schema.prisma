@@ -12,6 +12,7 @@ model Subscription {
   fullName         String    @map("fullname")
   age              Int
   email            String
+  locationDisplay  String?   @map("location_display")
   latitude         Float     @db.DoublePrecision
   longitude        Float     @db.DoublePrecision
   threshold        Int
