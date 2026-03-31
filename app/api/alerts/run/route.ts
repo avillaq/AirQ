@@ -63,6 +63,11 @@ export async function POST(request: NextRequest) {
   let failed = 0;
   let skippedCooldown = 0;
   let skippedBelowThreshold = 0;
+  const failedDetails: Array<{
+    subscriptionId: string;
+    email: string;
+    error: string;
+  }> = [];
 
   for (const row of subscriptions) {
     const coordKey = toCoordKey(row.latitude, row.longitude);
@@ -119,8 +124,16 @@ export async function POST(request: NextRequest) {
           lastAlertSentAt: now,
         },
       });
-    } catch {
+    } catch (error) {
       failed += 1;
+
+      const message = error instanceof Error ? error.message : String(error);
+      const subscriptionId = String(row.id);
+      failedDetails.push({
+        subscriptionId,
+        email: row.email,
+        error: message,
+      });
     }
   }
 
@@ -131,5 +144,6 @@ export async function POST(request: NextRequest) {
     skipped_cooldown: skippedCooldown,
     skipped_below_threshold: skippedBelowThreshold,
     failed,
+    failed_details: failedDetails,
   });
 }
