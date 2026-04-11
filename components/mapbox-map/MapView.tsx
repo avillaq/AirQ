@@ -21,6 +21,19 @@ const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 if (!token) console.error('Falta NEXT_PUBLIC_MAPBOX_TOKEN');
 mapboxgl.accessToken = token || '';
 
+function supportsWebGL() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 const SELECTED_LOCATION_SOURCE_ID = 'selected-location';
 const SELECTED_LOCATION_HALO_LAYER_ID = 'selected-location-halo';
 const SELECTED_LOCATION_CORE_LAYER_ID = 'selected-location-core';
@@ -59,6 +72,7 @@ export default function MapView({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isWebglAvailable, setIsWebglAvailable] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const citySearchCacheRef = useRef<Map<string, CitySuggestion[]>>(new Map());
   const pendingCenterRef = useRef(center);
@@ -234,20 +248,24 @@ export default function MapView({
 
   const loadData = useCallback(async () => {
     if (!mapRef.current) return;
+    try {
+      const result = (await getAirQualityPoints()) as AirQualityPointsResult;
+      const src = mapRef.current.getSource('air-points');
 
-    const result = (await getAirQualityPoints()) as AirQualityPointsResult;
-    const src = mapRef.current.getSource('air-points');
+      if (!src || !('setData' in src)) return;
 
-    if (!src || !('setData' in src)) return;
+      (src as mapboxgl.GeoJSONSource).setData(result.geojson);
 
-    (src as mapboxgl.GeoJSONSource).setData(result.geojson);
-
-    if (result.source === 'real') {
-      setError(null);
-    } else if (result.source === 'unavailable') {
-      setError(result.message || 'Datos del mapa no disponibles');
-    } else {
-      setError('Usando datos de demostracion');
+      if (result.source === 'real') {
+        setError(null);
+      } else if (result.source === 'unavailable') {
+        setError(result.message || 'Datos del mapa no disponibles');
+      } else {
+        setError('Usando datos de demostracion');
+      }
+    } catch (err) {
+      console.error('Error cargando datos del mapa:', err);
+      setError('No se pudieron cargar los datos del mapa.');
     }
   }, []);
 
@@ -256,16 +274,30 @@ export default function MapView({
     if (mapRef.current) return;
     if (!containerRef.current) return;
 
-    mapRef.current = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center,
-      zoom,
-      pitch: 0,
-      bearing: 0,
-      maxZoom: 12,
-      minZoom: 2
-    });
+    if (!supportsWebGL()) {
+      setIsWebglAvailable(false);
+      setError('Este navegador o dispositivo no soporta WebGL. Mostrando vista simplificada.');
+      return;
+    }
+
+    try {
+      mapRef.current = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/outdoors-v12',
+        center,
+        zoom,
+        pitch: 0,
+        bearing: 0,
+        maxZoom: 12,
+        minZoom: 2
+      });
+      setIsWebglAvailable(true);
+    } catch (err) {
+      console.error('Error creando el mapa de Mapbox:', err);
+      setIsWebglAvailable(false);
+      setError('No fue posible inicializar el mapa 3D en este entorno.');
+      return;
+    }
 
     const map = mapRef.current;
     if (!map) return;
@@ -353,6 +385,13 @@ export default function MapView({
 
       map.on('mouseleave', SELECTED_LOCATION_CORE_LAYER_ID, () => {
         map.getCanvas().style.cursor = '';
+      });
+
+      map.on('error', (event) => {
+        const message = event?.error?.message;
+        if (message) {
+          setError(message);
+        }
       });
 
       loadData();
@@ -454,7 +493,31 @@ export default function MapView({
         </button>
       </div>
 
-      <div className="mapbox-container" ref={containerRef} />
+      {isWebglAvailable ? (
+        <div className="mapbox-container" ref={containerRef} />
+      ) : (
+        <div
+          className="mapbox-container"
+          style={{
+            display: 'grid',
+            placeItems: 'center',
+            minHeight: 320,
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            background: 'linear-gradient(180deg, rgba(20, 28, 25, 0.9), rgba(10, 14, 13, 0.95))',
+            color: '#d2f4ea',
+            borderRadius: 14,
+            padding: '1rem',
+            textAlign: 'center',
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 700, marginBottom: 6 }}>Mapa 3D no disponible</p>
+            <p style={{ opacity: 0.9, fontSize: 14 }}>
+              Tu navegador no pudo crear un contexto WebGL. Puedes seguir consultando datos de AQI y usar la busqueda de ciudades.
+            </p>
+          </div>
+        </div>
+      )}
 
       {airQualityData && (
         <Metrics

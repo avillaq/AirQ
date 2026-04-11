@@ -3,15 +3,33 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Header } from "./header"
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import * as THREE from "three"
+
+function supportsWebGL() {
+  if (typeof window === "undefined") return false
+  try {
+    const canvas = document.createElement("canvas")
+    return Boolean(
+      window.WebGLRenderingContext &&
+        (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+    )
+  } catch {
+    return false
+  }
+}
 
 export function HeroSection() {
   const threeContainerRef = useRef<HTMLDivElement | null>(null)
+  const [hasWebGL, setHasWebGL] = useState(true)
 
   useEffect(() => {
     const container = threeContainerRef.current
     if (!container) return
+    if (!supportsWebGL()) {
+      setHasWebGL(false)
+      return
+    }
     const isMobile = window.innerWidth < 768
 
     const scene = new THREE.Scene()
@@ -24,7 +42,14 @@ export function HeroSection() {
     )
     camera.position.set(0, 0, 600)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" })
+    let renderer: THREE.WebGLRenderer
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" })
+    } catch (error) {
+      console.error("No se pudo inicializar Three.js WebGLRenderer", error)
+      setHasWebGL(false)
+      return
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 1.35))
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.domElement.style.display = "block"
@@ -370,15 +395,17 @@ export function HeroSection() {
         }}
       />
 
-      <div
-        ref={threeContainerRef}
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+      {hasWebGL ? (
+        <div
+          ref={threeContainerRef}
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+      ) : null}
 
       <div className="absolute top-0 left-0 right-0 z-20">
         <Header />
