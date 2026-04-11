@@ -6,7 +6,6 @@
     "build": "next build --turbopack",
     "postinstall": "prisma generate",
     "start": "next start",
-    "start:prod": "npx prisma migrate deploy && node .next/standalone/server.js",
     "lint": "next lint",
     "alerts:run:simulate": "node scripts/simulate-alerts-run.mjs"
   },
